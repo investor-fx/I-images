@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="config.js"></script>
 <style>
 :root{
   --bg:#0E0C08;
@@ -26,6 +27,7 @@
   --card:#1A1710;
   --line:#2E2916;
   --ph:#26221A;
+  --err:#FF8A7A;
 }
 *{box-sizing:border-box;margin:0}
 html{-webkit-text-size-adjust:100%}
@@ -60,9 +62,11 @@ a{color:inherit}
 .shape{display:flex;gap:18px;padding:8px 2px 2px;font-size:14px}
 .shape button{color:var(--muted);padding:4px 0;border-bottom:2px solid transparent}
 .shape button[aria-pressed="true"]{color:var(--ink);font-weight:600;border-color:var(--accent)}
-.saved-title{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;padding:2px 2px 4px}
+.page-title{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;padding:2px 2px 4px}
 body:not(.saved) .saved-only{display:none}
-body.saved .explore-only{display:none}
+body:not(.account) .account-only{display:none}
+body.saved .explore-only,body.account .explore-only{display:none}
+body.account #grid,body.account #status{display:none}
 
 /* grid */
 #grid{display:flex;gap:10px;padding:6px 10px;align-items:flex-start}
@@ -82,6 +86,14 @@ body.saved .explore-only{display:none}
 .spinner{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);margin:0 auto;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spinner{animation-duration:3s}}
+
+/* account page */
+.account-panel{padding:10px 16px}
+.acct-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.acct-name{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em}
+.acct-mail{color:var(--muted);margin-top:2px;word-break:break-all}
+.acct-note{color:var(--muted);font-size:14px;margin:14px 2px 18px}
+.acct-btn{width:100%;height:50px;border-radius:25px;border:1px solid var(--accent);color:var(--accent-soft);font-weight:700}
 
 /* bottom tabs */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
@@ -106,12 +118,30 @@ body.saved .explore-only{display:none}
 .v-actions button[aria-pressed="true"]{background:var(--accent-soft);color:var(--on-accent)}
 
 #toast{
-  position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;
+  position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;
   background:var(--accent);color:var(--on-accent);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:600;
   opacity:0;pointer-events:none;transition:opacity .2s;max-width:88vw;text-align:center;
 }
 #toast.show{opacity:1}
 #viewer:not([hidden]) ~ #toast{bottom:calc(120px + env(safe-area-inset-bottom))}
+
+/* sign up / log in */
+#auth{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;display:flex;justify-content:center;padding:calc(36px + env(safe-area-inset-top)) 22px calc(28px + env(safe-area-inset-bottom))}
+.auth-card{width:100%;max-width:380px;margin:auto 0}
+.auth-logo{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:46px;letter-spacing:-.04em;line-height:1;color:var(--accent)}
+.auth-tag{margin:10px 0 26px;color:var(--muted)}
+.auth-tabs{display:flex;gap:24px;margin-bottom:18px}
+.auth-tabs button{color:var(--muted);padding:6px 0;font-size:17px;border-bottom:2px solid transparent}
+.auth-tabs button[aria-pressed="true"]{color:var(--ink);font-weight:700;border-color:var(--accent)}
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 16px;font:inherit;font-size:16px;appearance:none;-webkit-appearance:none}
+.field input:focus{border-color:var(--accent);outline:none}
+.auth-btn{width:100%;height:52px;border-radius:26px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:16px;margin-top:6px}
+.auth-btn:disabled{opacity:.55}
+.auth-msg{min-height:22px;margin:12px 2px 4px;font-size:14px;color:var(--err)}
+.auth-msg.ok{color:var(--accent-soft)}
+.auth-link{color:var(--accent-soft);font-size:14px;padding:8px 2px;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -123,7 +153,7 @@ body.saved .explore-only{display:none}
   </div>
   <form class="search explore-only" id="searchForm" role="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input id="q" type="search" inputmode="search" enterkeyhint="search" placeholder="Search wallpapers, fashion, nature" aria-label="Search pictures" autocomplete="off">
+    <input id="q" type="search" inputmode="search" enterkeyhint="search" placeholder="Search any picture or wallpaper" aria-label="Search pictures" autocomplete="off">
   </form>
   <div class="chips explore-only" id="chips" aria-label="Quick searches"></div>
   <div class="shape explore-only" id="shape" aria-label="Picture shape">
@@ -131,10 +161,19 @@ body.saved .explore-only{display:none}
     <button data-o="vertical" aria-pressed="false">Portrait</button>
     <button data-o="horizontal" aria-pressed="false">Landscape</button>
   </div>
-  <h1 class="saved-title saved-only">Saved</h1>
+  <h1 class="page-title saved-only">Saved</h1>
+  <h1 class="page-title account-only">Account</h1>
 </header>
 
 <main>
+  <section class="account-panel account-only">
+    <div class="acct-card">
+      <p class="acct-name" id="acctName"></p>
+      <p class="acct-mail" id="acctMail"></p>
+    </div>
+    <p class="acct-note">Pictures you save are kept on this phone, under this account.</p>
+    <button class="acct-btn" id="logout">Log out</button>
+  </section>
   <div id="grid"></div>
   <div id="status" aria-live="polite"></div>
   <div id="sentinel" style="height:1px"></div>
@@ -148,6 +187,10 @@ body.saved .explore-only{display:none}
   <button id="tabSaved">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
     Saved
+  </button>
+  <button id="tabAccount" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+    Account
   </button>
 </nav>
 
@@ -167,11 +210,33 @@ body.saved .explore-only{display:none}
     </div>
   </div>
 </div>
+
+<div id="auth" hidden>
+  <div class="auth-card">
+    <div class="auth-logo">I-Images</div>
+    <p class="auth-tag">Find any picture. Keep the ones you love.</p>
+    <div id="authLoading"><div class="spinner" role="progressbar" aria-label="Connecting"></div></div>
+    <form id="authForm" hidden novalidate>
+      <div class="auth-tabs" role="group" aria-label="Log in or sign up">
+        <button type="button" id="modeIn" aria-pressed="true">Log in</button>
+        <button type="button" id="modeUp" aria-pressed="false">Sign up</button>
+      </div>
+      <label class="field" id="fName" hidden><span>Your name</span><input id="authName" type="text" autocomplete="name" autocapitalize="words"></label>
+      <label class="field"><span>Email</span><input id="authEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false"></label>
+      <label class="field"><span>Password</span><input id="authPass" type="password" autocomplete="current-password"></label>
+      <p class="auth-msg" id="authMsg" role="alert"></p>
+      <button class="auth-btn" id="authSubmit" type="submit">Log in</button>
+      <button class="auth-link" id="authForgot" type="button">Forgot password?</button>
+    </form>
+  </div>
+</div>
+
 <div id="toast" role="status"></div>
 
 <script>
 const API_KEY = '57880364-a3121a56fc7d3bace40f9249d';
-const API_URL = 'https://pixabay.com/api/';
+const PIXABAY_URL = 'https://pixabay.com/api/';
+const COMMONS_URL = 'https://commons.wikimedia.org/w/api.php';
 const PER_PAGE = 30;
 
 const $ = s => document.querySelector(s);
@@ -193,12 +258,19 @@ const CHIPS = [
   ['Food', 'food']
 ];
 
-const state = { q: '', orient: 'all', page: 1, loading: false, done: false, items: [], view: 'explore', reqId: 0 };
+const state = { q: '', orient: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null };
+function resetSources(){ state.src = { pixabay: { page: 1, count: 0, done: false }, commons: { offset: 0, done: false } }; }
+resetSources();
+const allDone = () => Object.values(state.src).every(s => s.done);
 const byId = new Map();
 let current = null;
 
+/* ---------- accounts ---------- */
+const authOn = !!(window.MUSE_FIREBASE && window.MUSE_FIREBASE.apiKey);
+let uid = 'guest', me = null, booted = false, authReady = false;
+
 /* ---------- helpers ---------- */
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
 let toastTimer;
@@ -209,9 +281,10 @@ function toast(msg){
   toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-/* ---------- favorites (stored on this phone) ---------- */
-function loadFavs(){ try { return JSON.parse(localStorage.getItem('muse:favs') || '[]'); } catch { return []; } }
-function saveFavs(l){ try { localStorage.setItem('muse:favs', JSON.stringify(l)); } catch {} }
+/* ---------- favorites (kept on this phone, per account) ---------- */
+const favKey = () => 'muse:favs:' + uid;
+function loadFavs(){ try { return JSON.parse(localStorage.getItem(favKey()) || '[]'); } catch { return []; } }
+function saveFavs(l){ try { localStorage.setItem(favKey(), JSON.stringify(l)); } catch {} }
 function isFav(id){ return loadFavs().some(f => f.id === id); }
 
 function toggleFav(item){
@@ -264,18 +337,18 @@ function place(item){
 }
 
 function renderAll(list){ buildCols(); list.forEach(place); }
-const currentList = () => state.view === 'saved' ? loadFavs() : state.items;
+const currentList = () => state.view === 'saved' ? loadFavs() : state.view === 'explore' ? state.items : [];
 
 grid.addEventListener('click', e => {
   const card = e.target.closest('.card'); if (!card) return;
-  const item = byId.get(Number(card.dataset.id)); if (!item) return;
+  const item = byId.get(card.dataset.id); if (!item) return;
   if (e.target.closest('.heart')) toggleFav(item); else openViewer(item);
 });
 
 let rz;
 addEventListener('resize', () => {
   clearTimeout(rz);
-  rz = setTimeout(() => { if (cols.length !== colCount()) renderAll(currentList()); }, 200);
+  rz = setTimeout(() => { if (state.view !== 'account' && cols.length !== colCount()) renderAll(currentList()); }, 200);
 });
 
 /* ---------- status line ---------- */
@@ -287,39 +360,99 @@ function setStatus(kind, msg){
 }
 statusEl.addEventListener('click', e => { if (e.target.closest('.retry')) loadMore(); });
 
-/* ---------- loading pictures from Pixabay ---------- */
+/* ---------- picture sources ---------- */
+async function fetchPixabay(my){
+  const s = state.src.pixabay;
+  const u = new URL(PIXABAY_URL), p = u.searchParams;
+  p.set('key', API_KEY);
+  if (state.q) p.set('q', state.q.slice(0, 100));
+  p.set('image_type', 'all');
+  p.set('per_page', PER_PAGE);
+  p.set('page', s.page);
+  p.set('safesearch', 'true');
+  if (state.orient !== 'all') p.set('orientation', state.orient);
+
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (r.status === 429) throw new Error('Too many searches in a short time. Wait a minute, then try again.');
+  if (r.status === 400 && s.page > 1) { s.done = true; return []; }
+  if (!r.ok) throw new Error('Pictures could not be loaded (error ' + r.status + ').');
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const hits = data.hits || [];
+  s.page++; s.count += hits.length;
+  if (!hits.length || s.count >= data.totalHits) s.done = true;
+  return hits.map(h => ({
+    id: 'p' + h.id, w: h.webformatWidth, h: h.webformatHeight, thumb: h.webformatURL,
+    large: h.largeImageURL || h.webformatURL, page: h.pageURL, tags: h.tags, user: h.user, src: 'Pixabay'
+  }));
+}
+
+async function fetchCommons(my){
+  const s = state.src.commons;
+  if (!state.q) { s.done = true; return []; }
+  const u = new URL(COMMONS_URL), p = u.searchParams;
+  p.set('action', 'query'); p.set('format', 'json'); p.set('origin', '*');
+  p.set('generator', 'search'); p.set('gsrnamespace', '6');
+  p.set('gsrsearch', state.q + ' filetype:bitmap');
+  p.set('gsrlimit', '30'); p.set('gsroffset', s.offset);
+  p.set('prop', 'imageinfo'); p.set('iiprop', 'url|size|mime'); p.set('iiurlwidth', '640');
+
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) throw new Error('Pictures could not be loaded (error ' + r.status + ').');
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const pages = data.query && data.query.pages ? Object.values(data.query.pages) : [];
+  pages.sort((a, b) => a.index - b.index);
+  if (data.continue && data.continue.gsroffset != null) s.offset = data.continue.gsroffset; else s.done = true;
+  if (!pages.length) s.done = true;
+
+  const out = [];
+  pages.forEach(pg => {
+    const info = pg.imageinfo && pg.imageinfo[0];
+    if (!info || !/^image\/(jpeg|png|webp)$/.test(info.mime) || !info.thumburl) return;
+    if (info.width < 500 || !info.thumbwidth || !info.thumbheight) return;
+    if (state.orient === 'vertical' && info.height <= info.width) return;
+    if (state.orient === 'horizontal' && info.width <= info.height) return;
+    const large = info.width >= 1280 ? info.thumburl.replace(/\/\d+px-([^\/]+)$/, '/1280px-$1') : info.url;
+    out.push({
+      id: 'c' + pg.pageid, w: info.thumbwidth, h: info.thumbheight, thumb: info.thumburl, large: large,
+      page: info.descriptionurl, tags: pg.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' '),
+      user: 'Wikimedia Commons', src: 'Wikimedia Commons'
+    });
+  });
+  return out;
+}
+
+function interleave(lists){
+  const out = [], max = Math.max(0, ...lists.map(l => l.length));
+  for (let i = 0; i < max; i++) lists.forEach(l => { if (l[i]) out.push(l[i]); });
+  return out;
+}
+
 async function loadMore(){
-  if (state.view !== 'explore' || state.loading || state.done) return;
+  if (state.view !== 'explore' || state.loading || allDone()) return;
   state.loading = true; setStatus('loading');
   const my = state.reqId;
   try {
-    const u = new URL(API_URL), p = u.searchParams;
-    p.set('key', API_KEY);
-    if (state.q) p.set('q', state.q);
-    p.set('image_type', 'all');
-    p.set('per_page', PER_PAGE);
-    p.set('page', state.page);
-    p.set('safesearch', 'true');
-    if (state.orient !== 'all') p.set('orientation', state.orient);
-
-    const r = await fetch(u);
+    const jobs = [];
+    if (!state.src.pixabay.done) jobs.push(fetchPixabay(my));
+    if (!state.src.commons.done) jobs.push(fetchCommons(my));
+    const results = await Promise.allSettled(jobs);
     if (my !== state.reqId) return;
-    if (r.status === 429) throw new Error('Too many searches in a short time. Wait a minute, then try again.');
-    if (r.status === 400 && state.page > 1) { state.done = true; setStatus('end', 'That is everything for this search.'); return; }
-    if (!r.ok) throw new Error('Pixabay could not load pictures (error ' + r.status + ').');
 
-    const data = await r.json();
-    if (my !== state.reqId) return;
-    const fresh = (data.hits || [])
-      .filter(h => !state.items.some(x => x.id === h.id))
-      .map(h => ({ id: h.id, w: h.webformatWidth, h: h.webformatHeight, thumb: h.webformatURL, large: h.largeImageURL || h.webformatURL, page: h.pageURL, tags: h.tags, user: h.user }));
+    const lists = []; let firstErr = null;
+    results.forEach(r => { if (r.status === 'fulfilled') lists.push(r.value); else firstErr = firstErr || r.reason; });
+    if (!lists.length) throw firstErr;
 
-    fresh.forEach(it => { state.items.push(it); place(it); });
-    state.page++;
-    if (!data.hits || !data.hits.length || state.items.length >= data.totalHits) state.done = true;
+    interleave(lists).forEach(it => {
+      if (state.items.some(x => x.id === it.id)) return;
+      state.items.push(it); place(it);
+    });
 
-    if (!state.items.length) setStatus('empty', 'No pictures found for "' + state.q + '". Try a different word.');
-    else if (state.done) setStatus('end', 'That is everything for this search.');
+    if (!state.items.length && allDone()) setStatus('empty', 'No pictures found for "' + state.q + '". Try a different word.');
+    else if (allDone()) setStatus('end', 'That is everything for this search.');
     else setStatus('');
   } catch (err) {
     if (my !== state.reqId) return;
@@ -328,7 +461,7 @@ async function loadMore(){
   } finally {
     if (my === state.reqId) {
       state.loading = false;
-      if (!state.done && state.view === 'explore' && sentinel.getBoundingClientRect().top < innerHeight + 600 && statusEl.querySelector('.spinner') === null && !statusEl.querySelector('.retry')) loadMore();
+      if (!allDone() && state.view === 'explore' && sentinel.getBoundingClientRect().top < innerHeight + 600 && !statusEl.querySelector('.retry')) loadMore();
     }
   }
 }
@@ -336,7 +469,7 @@ async function loadMore(){
 new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '900px' }).observe(sentinel);
 
 function startSearch(){
-  state.reqId++; state.items = []; state.page = 1; state.done = false; state.loading = false;
+  state.reqId++; state.items = []; resetSources(); state.loading = false;
   if (state.view !== 'explore') setView('explore', true);
   buildCols(); scrollTo(0, 0); updateChips(); loadMore();
 }
@@ -374,23 +507,31 @@ $('#searchForm').addEventListener('submit', e => {
 function setView(v, silent){
   state.view = v;
   document.body.classList.toggle('saved', v === 'saved');
+  document.body.classList.toggle('account', v === 'account');
   $('#tabExplore').setAttribute('aria-current', v === 'explore' ? 'page' : 'false');
   $('#tabSaved').setAttribute('aria-current', v === 'saved' ? 'page' : 'false');
+  $('#tabAccount').setAttribute('aria-current', v === 'account' ? 'page' : 'false');
   if (silent) return;
   scrollTo(0, 0);
-  if (v === 'saved') {
+  if (v === 'account') {
+    state.reqId++; state.loading = false;
+    grid.innerHTML = ''; cols = []; heights = [];
+    setStatus(''); renderAccount();
+  } else if (v === 'saved') {
     state.reqId++; state.loading = false;
     const favs = loadFavs();
     renderAll(favs);
     setStatus(favs.length ? '' : 'empty', 'Nothing saved yet. Tap the heart on any picture to keep it here.');
   } else {
+    state.reqId++; state.loading = false;
     renderAll(state.items);
-    if (!state.items.length) { state.reqId++; state.loading = false; state.done = false; loadMore(); }
-    else setStatus(state.done ? 'end' : '', 'That is everything for this search.');
+    if (!state.items.length) { resetSources(); loadMore(); }
+    else setStatus(allDone() ? 'end' : '', 'That is everything for this search.');
   }
 }
 $('#tabExplore').addEventListener('click', () => { if (state.view !== 'explore') setView('explore'); else scrollTo({ top: 0, behavior: 'smooth' }); });
 $('#tabSaved').addEventListener('click', () => { if (state.view !== 'saved') setView('saved'); });
+$('#tabAccount').addEventListener('click', () => { if (state.view !== 'account') setView('account'); });
 
 /* ---------- full-screen viewer ---------- */
 function updateSaveBtn(){
@@ -406,7 +547,9 @@ function openViewer(item){
   const big = new Image();
   big.onload = () => { if (current === item) vImg.src = item.large; };
   big.src = item.large;
-  $('#vCap').innerHTML = esc(item.tags) + ' &middot; <a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>';
+  $('#vCap').innerHTML = item.src === 'Pixabay'
+    ? esc(item.tags) + ' &middot; <a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>'
+    : esc(item.tags) + ' &middot; <a href="' + esc(item.page) + '" target="_blank" rel="noopener">View on Wikimedia Commons</a>';
   updateSaveBtn();
   viewer.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -433,9 +576,10 @@ $('#vDl').addEventListener('click', async () => {
     const r = await fetch(item.large, { mode: 'cors' });
     if (!r.ok) throw 0;
     const blob = await r.blob();
+    const ext = ((blob.type || 'image/jpeg').split('/')[1] || 'jpg').replace('jpeg', 'jpg');
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'i-images-' + item.id + '.jpg';
+    a.href = url; a.download = 'i-images-' + item.id + '.' + ext;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     toast('Downloaded');
@@ -454,6 +598,93 @@ $('#vShare').addEventListener('click', async () => {
   } catch {}
 });
 
+/* ---------- sign up / log in screen ---------- */
+const authEl = $('#auth');
+let mode = 'in';
+
+function authMsg(text, ok){ const m = $('#authMsg'); m.textContent = text || ''; m.classList.toggle('ok', !!ok); }
+
+function setMode(m){
+  mode = m;
+  $('#modeIn').setAttribute('aria-pressed', m === 'in');
+  $('#modeUp').setAttribute('aria-pressed', m === 'up');
+  $('#fName').hidden = m !== 'up';
+  $('#authForgot').hidden = m === 'up';
+  $('#authSubmit').textContent = m === 'up' ? 'Sign up' : 'Log in';
+  $('#authPass').autocomplete = m === 'up' ? 'new-password' : 'current-password';
+  $('#authPass').placeholder = m === 'up' ? 'At least 6 characters' : '';
+  authMsg('');
+}
+$('#modeIn').addEventListener('click', () => setMode('in'));
+$('#modeUp').addEventListener('click', () => setMode('up'));
+
+function showAuthForm(msg){
+  $('#authLoading').hidden = true; $('#authForm').hidden = false;
+  if (msg) authMsg(msg);
+}
+function showAuth(){
+  if (!viewer.hidden) closeViewer();
+  authEl.hidden = false; document.body.style.overflow = 'hidden';
+  if (authReady) showAuthForm();
+  $('#authPass').value = '';
+}
+function hideAuth(){ authEl.hidden = true; document.body.style.overflow = ''; $('#authPass').value = ''; authMsg(''); }
+
+function friendly(err){
+  const c = err && err.code || '';
+  if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found') return 'Wrong email or password.';
+  if (c === 'auth/email-already-in-use') return 'That email already has an account. Tap Log in instead.';
+  if (c === 'auth/weak-password') return 'Choose a password with at least 6 characters.';
+  if (c === 'auth/invalid-email' || c === 'auth/missing-email') return 'Enter a valid email address.';
+  if (c === 'auth/missing-password') return 'Enter your password.';
+  if (c === 'auth/too-many-requests') return 'Too many tries. Wait a few minutes and try again.';
+  if (c === 'auth/network-request-failed') return 'No internet connection. Check it and try again.';
+  if (c === 'auth/operation-not-allowed') return 'Email sign-in is not switched on yet in the Firebase settings.';
+  return 'Something went wrong. Please try again.';
+}
+
+$('#authForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!window.museAuth) { authMsg('Still connecting. Check your internet and try again.'); return; }
+  const email = $('#authEmail').value.trim(), pw = $('#authPass').value, name = $('#authName').value.trim();
+  const btn = $('#authSubmit'); btn.disabled = true; authMsg('');
+  try {
+    if (mode === 'up') await window.museAuth.signUp(name, email, pw);
+    else await window.museAuth.signIn(email, pw);
+  } catch (err) { authMsg(friendly(err)); }
+  finally { btn.disabled = false; }
+});
+
+$('#authForgot').addEventListener('click', async () => {
+  const email = $('#authEmail').value.trim();
+  if (!email) { authMsg('Type your email above, then tap Forgot password again.'); return; }
+  if (!window.museAuth) { authMsg('Still connecting. Check your internet and try again.'); return; }
+  try { await window.museAuth.reset(email); authMsg('Reset link sent. Check your inbox and spam folder.', true); }
+  catch (err) { authMsg(friendly(err)); }
+});
+
+function renderAccount(){
+  $('#acctName').textContent = (me && me.name) || 'Welcome';
+  $('#acctMail').textContent = (me && me.email) || '';
+}
+$('#logout').addEventListener('click', async () => {
+  try { await window.museAuth.signOut(); } catch { toast('Could not log out. Try again.'); }
+});
+
+addEventListener('muse-auth', e => {
+  authReady = true;
+  const u = e.detail.user;
+  if (!u) { me = null; uid = 'guest'; showAuth(); return; }
+  const same = me && me.uid === u.uid;
+  me = u; uid = u.uid; renderAccount(); hideAuth();
+  if (same) return;
+  if (!booted) boot(); else startSearch();
+});
+addEventListener('muse-auth-error', () => {
+  authReady = true; authEl.hidden = false;
+  showAuthForm('The sign-in service could not load. Check your internet, then reload the app.');
+});
+
 /* ---------- install button + offline shell ---------- */
 let deferred;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('#install').hidden = false; });
@@ -465,9 +696,21 @@ addEventListener('appinstalled', () => { $('#install').hidden = true; });
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 
 /* ---------- go ---------- */
-updateChips();
-buildCols();
-loadMore();
+function boot(){
+  if (booted) return;
+  booted = true;
+  updateChips(); buildCols(); loadMore();
+}
+
+setMode('in');
+if (authOn) {
+  $('#tabAccount').hidden = false;
+  authEl.hidden = false; document.body.style.overflow = 'hidden';
+  setTimeout(() => { if (!authReady) { authReady = true; showAuthForm('Still connecting. Check your internet connection.'); } }, 8000);
+} else {
+  boot();
+}
 </script>
+<script type="module" src="auth.js"></script>
 </body>
 </html>
