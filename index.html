@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>I-Images</title>
+<meta name="description" content="Search and save wallpapers and pictures from all over the web.">
+<meta name="theme-color" content="#0E0C08">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="I-Images">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E0C08;
+  --ink:#F5ECD0;
+  --muted:#9A8F70;
+  --accent:#D4AF37;
+  --accent-soft:#F0D679;
+  --on-accent:#0E0C08;
+  --card:#1A1710;
+  --line:#2E2916;
+  --ph:#26221A;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  min-height:100dvh;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 14px 8px}
+.brand-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;min-height:38px}
+.logo{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1;color:var(--accent)}
+#install{padding:8px 16px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:700}
+.search{position:relative}
+.search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.search input{
+  width:100%;height:50px;border-radius:25px;border:1px solid var(--line);background:var(--card);
+  padding:0 18px 0 46px;font:inherit;font-size:16px;color:var(--ink);appearance:none;-webkit-appearance:none;
+}
+.search input::placeholder{color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 4px;margin:0 -14px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 15px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.shape{display:flex;gap:18px;padding:8px 2px 2px;font-size:14px}
+.shape button{color:var(--muted);padding:4px 0;border-bottom:2px solid transparent}
+.shape button[aria-pressed="true"]{color:var(--ink);font-weight:600;border-color:var(--accent)}
+.saved-title{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;padding:2px 2px 4px}
+body:not(.saved) .saved-only{display:none}
+body.saved .explore-only{display:none}
+
+/* grid */
+#grid{display:flex;gap:10px;padding:6px 10px;align-items:flex-start}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.card{position:relative;border-radius:14px;overflow:hidden;background:var(--ph);cursor:pointer}
+.card img{display:block;width:100%;height:auto}
+.heart{
+  position:absolute;right:8px;bottom:8px;width:40px;height:40px;border-radius:50%;
+  background:rgba(35,31,58,.55);display:grid;place-items:center;
+}
+.heart svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linejoin:round}
+.heart[aria-pressed="true"]{background:rgba(14,12,8,.8)}
+.heart[aria-pressed="true"] svg{fill:var(--accent);stroke:var(--accent)}
+
+#status{text-align:center;padding:28px 24px;color:var(--muted);font-size:15px}
+#status .retry{margin-top:12px;padding:10px 20px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700}
+.spinner{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);margin:0 auto;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:3s}}
+
+/* bottom tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 9px;font-size:12px;color:var(--muted)}
+.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-current="page"]{color:var(--ink);font-weight:600}
+.tabs button[aria-current="page"] svg{stroke:var(--accent)}
+
+/* viewer */
+#viewer{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column;color:#fff}
+.v-top{padding:calc(10px + env(safe-area-inset-top)) 12px 6px;display:flex}
+.v-close{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.v-close svg{width:22px;height:22px;stroke:#fff;stroke-width:2.2;stroke-linecap:round;fill:none}
+.v-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 10px}
+.v-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+.v-info{padding:10px 16px calc(14px + env(safe-area-inset-bottom))}
+#vCap{font-size:14px;color:rgba(255,255,255,.72);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vCap a{text-decoration:underline}
+.v-actions{display:flex;gap:10px}
+.v-actions button{flex:1;height:48px;border-radius:24px;background:rgba(255,255,255,.14);font-weight:600;font-size:15px}
+.v-actions button.primary{background:var(--accent);color:var(--on-accent)}
+.v-actions button[aria-pressed="true"]{background:var(--accent-soft);color:var(--on-accent)}
+
+#toast{
+  position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;
+  background:var(--accent);color:var(--on-accent);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:600;
+  opacity:0;pointer-events:none;transition:opacity .2s;max-width:88vw;text-align:center;
+}
+#toast.show{opacity:1}
+#viewer:not([hidden]) ~ #toast{bottom:calc(120px + env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand-row">
+    <span class="logo">I-Images</span>
+    <button id="install" hidden>Install app</button>
+  </div>
+  <form class="search explore-only" id="searchForm" role="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" inputmode="search" enterkeyhint="search" placeholder="Search wallpapers, fashion, nature" aria-label="Search pictures" autocomplete="off">
+  </form>
+  <div class="chips explore-only" id="chips" aria-label="Quick searches"></div>
+  <div class="shape explore-only" id="shape" aria-label="Picture shape">
+    <button data-o="all" aria-pressed="true">All shapes</button>
+    <button data-o="vertical" aria-pressed="false">Portrait</button>
+    <button data-o="horizontal" aria-pressed="false">Landscape</button>
+  </div>
+  <h1 class="saved-title saved-only">Saved</h1>
+</header>
+
+<main>
+  <div id="grid"></div>
+  <div id="status" aria-live="polite"></div>
+  <div id="sentinel" style="height:1px"></div>
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <button id="tabExplore" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
+    Explore
+  </button>
+  <button id="tabSaved">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    Saved
+  </button>
+</nav>
+
+<div id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture viewer">
+  <div class="v-top">
+    <button class="v-close" id="vClose" aria-label="Close picture">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
+  </div>
+  <div class="v-stage"><img id="vImg" alt=""></div>
+  <div class="v-info">
+    <p id="vCap"></p>
+    <div class="v-actions">
+      <button id="vSave" aria-pressed="false">Save</button>
+      <button id="vDl" class="primary">Download</button>
+      <button id="vShare">Share</button>
+    </div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const API_KEY = '57880364-a3121a56fc7d3bace40f9249d';
+const API_URL = 'https://pixabay.com/api/';
+const PER_PAGE = 30;
+
+const $ = s => document.querySelector(s);
+const grid = $('#grid'), statusEl = $('#status'), sentinel = $('#sentinel');
+const input = $('#q'), viewer = $('#viewer'), vImg = $('#vImg');
+
+const CHIPS = [
+  ['Trending', '', null],
+  ['Wallpapers', 'wallpaper', 'vertical'],
+  ['Aesthetic', 'aesthetic'],
+  ['Fashion', 'fashion'],
+  ['Nature', 'nature'],
+  ['Minimal', 'minimal'],
+  ['Architecture', 'architecture'],
+  ['Space', 'galaxy'],
+  ['Flowers', 'flowers'],
+  ['Abstract', 'abstract art'],
+  ['Travel', 'travel'],
+  ['Food', 'food']
+];
+
+const state = { q: '', orient: 'all', page: 1, loading: false, done: false, items: [], view: 'explore', reqId: 0 };
+const byId = new Map();
+let current = null;
+
+/* ---------- helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ---------- favorites (stored on this phone) ---------- */
+function loadFavs(){ try { return JSON.parse(localStorage.getItem('muse:favs') || '[]'); } catch { return []; } }
+function saveFavs(l){ try { localStorage.setItem('muse:favs', JSON.stringify(l)); } catch {} }
+function isFav(id){ return loadFavs().some(f => f.id === id); }
+
+function toggleFav(item){
+  const list = loadFavs();
+  const i = list.findIndex(f => f.id === item.id);
+  if (i >= 0) { list.splice(i, 1); toast('Removed from saved'); }
+  else { list.unshift(item); toast('Saved'); }
+  saveFavs(list);
+  syncHearts(item.id, i < 0);
+}
+
+function syncHearts(id, saved){
+  grid.querySelectorAll('.card[data-id="' + id + '"]').forEach(card => {
+    const h = card.querySelector('.heart');
+    h.setAttribute('aria-pressed', saved);
+    h.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save');
+    if (state.view === 'saved' && !saved) card.remove();
+  });
+  if (state.view === 'saved' && !loadFavs().length) setStatus('empty', 'Nothing saved yet. Tap the heart on any picture to keep it here.');
+  if (current && current.id === id) updateSaveBtn();
+}
+
+/* ---------- masonry grid ---------- */
+let cols = [], heights = [];
+const colCount = () => { const w = innerWidth; return w >= 1100 ? 5 : w >= 800 ? 4 : w >= 560 ? 3 : 2; };
+
+function buildCols(){
+  grid.innerHTML = ''; cols = []; heights = [];
+  for (let i = 0; i < colCount(); i++){
+    const c = document.createElement('div'); c.className = 'col';
+    grid.appendChild(c); cols.push(c); heights.push(0);
+  }
+}
+
+function cardEl(item){
+  const saved = isFav(item.id);
+  const el = document.createElement('article');
+  el.className = 'card'; el.dataset.id = item.id;
+  el.innerHTML =
+    '<img src="' + esc(item.thumb) + '" alt="' + esc(item.tags) + '" width="' + item.w + '" height="' + item.h + '" loading="lazy" decoding="async">' +
+    '<button class="heart" aria-pressed="' + saved + '" aria-label="' + (saved ? 'Remove from saved' : 'Save') + '">' + HEART + '</button>';
+  return el;
+}
+
+function place(item){
+  byId.set(item.id, item);
+  const i = heights.indexOf(Math.min(...heights));
+  cols[i].appendChild(cardEl(item));
+  heights[i] += item.h / item.w;
+}
+
+function renderAll(list){ buildCols(); list.forEach(place); }
+const currentList = () => state.view === 'saved' ? loadFavs() : state.items;
+
+grid.addEventListener('click', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  const item = byId.get(Number(card.dataset.id)); if (!item) return;
+  if (e.target.closest('.heart')) toggleFav(item); else openViewer(item);
+});
+
+let rz;
+addEventListener('resize', () => {
+  clearTimeout(rz);
+  rz = setTimeout(() => { if (cols.length !== colCount()) renderAll(currentList()); }, 200);
+});
+
+/* ---------- status line ---------- */
+function setStatus(kind, msg){
+  if (kind === 'loading') statusEl.innerHTML = '<div class="spinner" role="progressbar" aria-label="Loading"></div>';
+  else if (kind === 'error') statusEl.innerHTML = esc(msg) + '<br><button class="retry">Try again</button>';
+  else if (kind) statusEl.textContent = msg;
+  else statusEl.textContent = '';
+}
+statusEl.addEventListener('click', e => { if (e.target.closest('.retry')) loadMore(); });
+
+/* ---------- loading pictures from Pixabay ---------- */
+async function loadMore(){
+  if (state.view !== 'explore' || state.loading || state.done) return;
+  state.loading = true; setStatus('loading');
+  const my = state.reqId;
+  try {
+    const u = new URL(API_URL), p = u.searchParams;
+    p.set('key', API_KEY);
+    if (state.q) p.set('q', state.q);
+    p.set('image_type', 'all');
+    p.set('per_page', PER_PAGE);
+    p.set('page', state.page);
+    p.set('safesearch', 'true');
+    if (state.orient !== 'all') p.set('orientation', state.orient);
+
+    const r = await fetch(u);
+    if (my !== state.reqId) return;
+    if (r.status === 429) throw new Error('Too many searches in a short time. Wait a minute, then try again.');
+    if (r.status === 400 && state.page > 1) { state.done = true; setStatus('end', 'That is everything for this search.'); return; }
+    if (!r.ok) throw new Error('Pixabay could not load pictures (error ' + r.status + ').');
+
+    const data = await r.json();
+    if (my !== state.reqId) return;
+    const fresh = (data.hits || [])
+      .filter(h => !state.items.some(x => x.id === h.id))
+      .map(h => ({ id: h.id, w: h.webformatWidth, h: h.webformatHeight, thumb: h.webformatURL, large: h.largeImageURL || h.webformatURL, page: h.pageURL, tags: h.tags, user: h.user }));
+
+    fresh.forEach(it => { state.items.push(it); place(it); });
+    state.page++;
+    if (!data.hits || !data.hits.length || state.items.length >= data.totalHits) state.done = true;
+
+    if (!state.items.length) setStatus('empty', 'No pictures found for "' + state.q + '". Try a different word.');
+    else if (state.done) setStatus('end', 'That is everything for this search.');
+    else setStatus('');
+  } catch (err) {
+    if (my !== state.reqId) return;
+    const offline = !navigator.onLine || err instanceof TypeError;
+    setStatus('error', offline ? 'No internet connection. Check your connection and try again.' : err.message);
+  } finally {
+    if (my === state.reqId) {
+      state.loading = false;
+      if (!state.done && state.view === 'explore' && sentinel.getBoundingClientRect().top < innerHeight + 600 && statusEl.querySelector('.spinner') === null && !statusEl.querySelector('.retry')) loadMore();
+    }
+  }
+}
+
+new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '900px' }).observe(sentinel);
+
+function startSearch(){
+  state.reqId++; state.items = []; state.page = 1; state.done = false; state.loading = false;
+  if (state.view !== 'explore') setView('explore', true);
+  buildCols(); scrollTo(0, 0); updateChips(); loadMore();
+}
+
+/* ---------- controls ---------- */
+const chipsEl = $('#chips');
+CHIPS.forEach(([label, q, o]) => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = label; b.dataset.q = q; b.setAttribute('aria-pressed', 'false');
+  b.addEventListener('click', () => {
+    state.q = q; input.value = q;
+    if (o) { state.orient = o; updateShape(); }
+    startSearch();
+  });
+  chipsEl.appendChild(b);
+});
+function updateChips(){
+  chipsEl.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.q === state.q));
+}
+
+function updateShape(){
+  $('#shape').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.o === state.orient));
+}
+$('#shape').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.orient = b.dataset.o; updateShape(); startSearch();
+});
+
+$('#searchForm').addEventListener('submit', e => {
+  e.preventDefault();
+  state.q = input.value.trim();
+  input.blur(); startSearch();
+});
+
+function setView(v, silent){
+  state.view = v;
+  document.body.classList.toggle('saved', v === 'saved');
+  $('#tabExplore').setAttribute('aria-current', v === 'explore' ? 'page' : 'false');
+  $('#tabSaved').setAttribute('aria-current', v === 'saved' ? 'page' : 'false');
+  if (silent) return;
+  scrollTo(0, 0);
+  if (v === 'saved') {
+    state.reqId++; state.loading = false;
+    const favs = loadFavs();
+    renderAll(favs);
+    setStatus(favs.length ? '' : 'empty', 'Nothing saved yet. Tap the heart on any picture to keep it here.');
+  } else {
+    renderAll(state.items);
+    if (!state.items.length) { state.reqId++; state.loading = false; state.done = false; loadMore(); }
+    else setStatus(state.done ? 'end' : '', 'That is everything for this search.');
+  }
+}
+$('#tabExplore').addEventListener('click', () => { if (state.view !== 'explore') setView('explore'); else scrollTo({ top: 0, behavior: 'smooth' }); });
+$('#tabSaved').addEventListener('click', () => { if (state.view !== 'saved') setView('saved'); });
+
+/* ---------- full-screen viewer ---------- */
+function updateSaveBtn(){
+  const s = current && isFav(current.id);
+  const b = $('#vSave');
+  b.setAttribute('aria-pressed', !!s);
+  b.textContent = s ? 'Saved' : 'Save';
+}
+
+function openViewer(item){
+  current = item;
+  vImg.src = item.thumb; vImg.alt = item.tags;
+  const big = new Image();
+  big.onload = () => { if (current === item) vImg.src = item.large; };
+  big.src = item.large;
+  $('#vCap').innerHTML = esc(item.tags) + ' &middot; <a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>';
+  updateSaveBtn();
+  viewer.hidden = false;
+  document.body.style.overflow = 'hidden';
+  history.pushState({ muse: 1 }, '');
+  $('#vClose').focus();
+}
+function closeViewer(){
+  viewer.hidden = true; current = null;
+  document.body.style.overflow = '';
+  vImg.removeAttribute('src');
+}
+$('#vClose').addEventListener('click', () => {
+  if (history.state && history.state.muse) history.back(); else closeViewer();
+});
+addEventListener('popstate', () => { if (!viewer.hidden) closeViewer(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !viewer.hidden) $('#vClose').click(); });
+
+$('#vSave').addEventListener('click', () => { if (current) toggleFav(current); });
+
+$('#vDl').addEventListener('click', async () => {
+  if (!current) return;
+  const item = current;
+  try {
+    const r = await fetch(item.large, { mode: 'cors' });
+    if (!r.ok) throw 0;
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'i-images-' + item.id + '.jpg';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast('Downloaded');
+  } catch {
+    window.open(item.large, '_blank');
+    toast('Picture opened. Press and hold it to download.');
+  }
+});
+
+$('#vShare').addEventListener('click', async () => {
+  if (!current) return;
+  const data = { title: 'I-Images', text: current.tags, url: current.page };
+  try {
+    if (navigator.share) await navigator.share(data);
+    else { await navigator.clipboard.writeText(current.page); toast('Link copied'); }
+  } catch {}
+});
+
+/* ---------- install button + offline shell ---------- */
+let deferred;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('#install').hidden = false; });
+$('#install').addEventListener('click', async () => {
+  if (!deferred) return;
+  deferred.prompt(); await deferred.userChoice; deferred = null; $('#install').hidden = true;
+});
+addEventListener('appinstalled', () => { $('#install').hidden = true; });
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+/* ---------- go ---------- */
+updateChips();
+buildCols();
+loadMore();
+</script>
+</body>
+</html>
