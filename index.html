@@ -145,7 +145,9 @@ body.account #grid,body.account #status{display:none}
 /* viewer */
 #viewer{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column;color:#fff}
 .v-top{padding:calc(10px + env(safe-area-inset-top)) 12px 6px;display:flex;align-items:center;justify-content:space-between}
-#vCount{font-size:14px;color:rgba(255,255,255,.7);padding-right:6px}
+#vCount{font-size:14px;color:rgba(255,255,255,.7)}
+.v-right{display:flex;align-items:center;gap:10px}
+.v-close svg circle{fill:none}
 .v-close{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center}
 .v-close svg{width:22px;height:22px;stroke:#fff;stroke-width:2.2;stroke-linecap:round;fill:none}
 .v-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 10px;touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}
@@ -207,6 +209,29 @@ body.account #grid,body.account #status{display:none}
 
 .offline-bar{background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:600;text-align:center;padding:7px 12px;margin:-10px -14px 10px;padding-top:calc(7px + env(safe-area-inset-top))}
 #note{margin:4px 14px 2px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:14px}
+.profile-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:6px 0 4px}
+.profile-head .avatar-wrap{margin-bottom:4px}
+.profile-head .acct-bio{margin-top:2px;max-width:320px}
+.profile-head .stats{width:100%;max-width:340px;border-top:0;margin-top:8px;padding-top:0}
+.profile-head .row-btns{width:100%;max-width:340px;margin-top:10px}
+.set-label{font-size:14px;color:var(--muted);margin:8px 4px 0}
+.set-list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.set-row{display:flex;justify-content:space-between;align-items:center;width:100%;padding:16px 18px;border-bottom:1px solid var(--line);text-align:left;font-size:16px}
+.set-row:last-child{border-bottom:0}
+.chev{color:var(--muted);font-size:24px;line-height:1}
+.set-sheet{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}
+.set-sheet [data-page]{display:flex;flex-direction:column;gap:14px}
+.set-sheet [data-page][hidden]{display:none}
+.set-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.set-top h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:22px;letter-spacing:-.02em}
+.avatar-edit{display:flex;align-items:center;gap:16px}
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.switch{width:52px;height:30px;border-radius:15px;background:var(--line);position:relative;flex:none}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(22px)}
+.danger-btn{width:100%;height:50px;border-radius:25px;border:1px solid var(--err);color:var(--err);font-weight:700}
+.info-title{font-weight:600;margin:4px 2px 6px;word-break:break-word}
 .mini-av{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px}
 .avatar-wrap{position:relative;flex:none}
 .avatar.big{width:88px;height:88px;font-size:38px}
@@ -248,8 +273,8 @@ body.account #grid,body.account #status{display:none}
     <button data-o="vertical" aria-pressed="false">Portrait</button>
     <button data-o="horizontal" aria-pressed="false">Landscape</button>
   </div>
-  <div class="shape explore-only" id="srcFilter" aria-label="Where pictures come from">
-    <button data-g="all" aria-pressed="true">All sources</button>
+  <div class="shape explore-only" id="srcFilter" aria-label="Kinds of pictures">
+    <button data-g="all" aria-pressed="true">All</button>
     <button data-g="photos" aria-pressed="false">Photos</button>
     <button data-g="art" aria-pressed="false">Art</button>
     <button data-g="space" aria-pressed="false">Space</button>
@@ -267,55 +292,34 @@ body.account #grid,body.account #status{display:none}
 <div id="note" hidden></div>
 <main>
   <section class="account-panel account-only">
-    <div class="acct-card">
-      <div class="acct-top">
-        <div class="avatar-wrap">
-          <div class="avatar big" id="avatar" aria-hidden="true"></div>
-          <button class="cam" id="avatarBtn" type="button" aria-label="Change profile photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-          <input id="avatarFile" type="file" accept="image/*" hidden>
-        </div>
-        <div>
-          <p class="acct-name" id="acctName"></p>
-          <p class="acct-mail" id="acctMail"></p>
-          <p class="acct-since" id="acctSince"></p>
-        </div>
+    <div class="profile-head">
+      <div class="avatar-wrap">
+        <div class="avatar big" aria-hidden="true"></div>
+        <button class="cam" id="avatarBtn" type="button" aria-label="Change profile photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+        <input id="avatarFile" type="file" accept="image/*" hidden>
       </div>
+      <h2 class="acct-name" id="acctName"></h2>
+      <p class="acct-mail" id="acctMail"></p>
       <p class="acct-bio" id="acctBio"></p>
+      <p class="acct-since" id="acctSince"></p>
       <div class="stats">
         <div class="stat"><b id="statSaved">0</b><span>Saved</span></div>
         <div class="stat"><b id="statBoards">0</b><span>Boards</span></div>
         <div class="stat"><b id="statPosts">-</b><span>Posts</span></div>
       </div>
-      <button class="text-btn" id="removePhoto" type="button" hidden>Remove profile photo</button>
-    </div>
-    <div class="acct-card">
-      <p class="acct-label">Edit profile</p>
-      <form class="edit-form" id="profileForm">
-        <label class="field"><span>Name</span><input id="nameInput" type="text" maxlength="40" autocomplete="name"></label>
-        <label class="field"><span>Bio</span><textarea id="bioInput" maxlength="120" rows="3" placeholder="Tell people a little about you"></textarea></label>
-        <button class="auth-btn" type="submit">Save profile</button>
-      </form>
-    </div>
-    <div class="row-btns">
-      <button class="acct-btn" id="myPosts">My posts</button>
-      <button class="acct-btn" id="changePw">Change password</button>
-    </div>
-    <div class="acct-card">
-      <p class="acct-label">Appearance</p>
-      <div class="seg" role="group" aria-label="Appearance">
-        <button id="themeDark" aria-pressed="true">Dark</button>
-        <button id="themeLight" aria-pressed="false">Light</button>
+      <div class="row-btns">
+        <button class="acct-btn" id="editProfileBtn">Edit profile</button>
+        <button class="acct-btn" id="myPosts">My posts</button>
       </div>
     </div>
-    <div class="acct-card" id="lockCard" hidden>
-      <p class="acct-label">Fingerprint lock</p>
-      <p class="acct-note" style="margin-bottom:12px">Ask for your fingerprint (or phone screen lock) each time you open I-Images on this phone.</p>
-      <button class="acct-btn" id="lockToggle">Turn on</button>
-    </div>
-    <div class="acct-card about">
-      <p class="acct-label">About I-Images</p>
-      <p><b>Version 1.2</b></p>
-      <p>Pictures come from Pixabay, Openverse, Wikimedia Commons, the Art Institute of Chicago, the Cleveland Museum of Art and NASA. Open a picture and tap its source link to see who made it and its license.</p>
+    <p class="set-label">Settings</p>
+    <div class="set-list" id="setList">
+      <button class="set-row" data-open="edit"><span>Edit profile</span><span class="chev">&#8250;</span></button>
+      <button class="set-row" data-open="account"><span>Account management</span><span class="chev">&#8250;</span></button>
+      <button class="set-row" data-open="privacy"><span>Privacy and data</span><span class="chev">&#8250;</span></button>
+      <button class="set-row" data-open="security"><span>Security</span><span class="chev">&#8250;</span></button>
+      <button class="set-row" data-open="appearance"><span>Appearance</span><span class="chev">&#8250;</span></button>
+      <button class="set-row" data-open="help"><span>Help and about</span><span class="chev">&#8250;</span></button>
     </div>
     <p class="acct-note" id="acctSync"></p>
     <button class="acct-btn" id="logout">Log out</button>
@@ -349,7 +353,10 @@ body.account #grid,body.account #status{display:none}
     <button class="v-close" id="vClose" aria-label="Close picture">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
     </button>
-    <span id="vCount" aria-live="polite"></span>
+    <div class="v-right">
+      <span id="vCount" aria-live="polite"></span>
+      <button class="v-close" id="vInfo" aria-label="Picture details"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.500v.01"/></svg></button>
+    </div>
   </div>
   <div class="v-stage"><img id="vImg" alt=""></div>
   <div class="v-info">
@@ -379,6 +386,86 @@ body.account #grid,body.account #status{display:none}
       <input id="boardName" type="text" maxlength="40" placeholder="New board name" aria-label="New board name">
       <button type="submit">Create</button>
     </form>
+  </div>
+</div>
+
+<div class="set-sheet" id="setSheet" hidden role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="set-top">
+    <button class="sheet-x" id="setBack" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2 id="setTitle"></h2>
+  </div>
+
+  <div data-page="edit" hidden>
+    <div class="avatar-edit">
+      <div class="avatar big" aria-hidden="true"></div>
+      <div class="avatar-actions">
+        <button class="text-btn" id="changePhoto" type="button">Change photo</button>
+        <button class="text-btn" id="removePhoto" type="button" hidden>Remove photo</button>
+      </div>
+    </div>
+    <form class="edit-form" id="profileForm">
+      <label class="field"><span>Name</span><input id="nameInput" type="text" maxlength="40" autocomplete="name"></label>
+      <label class="field"><span>Bio</span><textarea id="bioInput" maxlength="120" rows="3" placeholder="Tell people a little about you"></textarea></label>
+      <button class="auth-btn" type="submit">Save profile</button>
+    </form>
+  </div>
+
+  <div data-page="account" hidden>
+    <div class="acct-card"><p class="acct-label">Email</p><p id="acctMail2" class="acct-mail" style="font-size:16px;color:var(--ink)"></p></div>
+    <div class="acct-card"><p class="acct-label">Password</p><p class="acct-note" style="margin-bottom:12px">We will email you a link to choose a new password.</p><button class="acct-btn" id="changePw">Change password</button></div>
+    <div class="acct-card"><p class="acct-label">Delete account</p><p class="acct-note" style="margin-bottom:12px">Permanently removes your profile, saved pictures, boards and posts. This cannot be undone.</p><button class="danger-btn" id="deleteAcct">Delete my account</button></div>
+  </div>
+
+  <div data-page="privacy" hidden>
+    <div class="acct-card">
+      <div class="switch-row">
+        <div><p><b>Hide my name and photo on posts</b></p><p class="acct-note">Your community posts will show as "Member".</p></div>
+        <button class="switch" id="anonSwitch" role="switch" aria-checked="false" aria-label="Hide my name and photo on posts"></button>
+      </div>
+    </div>
+    <div class="acct-card"><p class="acct-label">Your data</p><button class="acct-btn" id="exportData">Download my data</button></div>
+    <div class="acct-card"><p class="acct-label">Search history</p><button class="acct-btn" id="clearHist">Clear search history</button></div>
+  </div>
+
+  <div data-page="security" hidden>
+    <div class="acct-card" id="lockCard" hidden>
+      <p class="acct-label">Fingerprint lock</p>
+      <p class="acct-note" style="margin-bottom:12px">Ask for your fingerprint (or phone screen lock) each time you open I-Images on this phone.</p>
+      <button class="acct-btn" id="lockToggle">Turn on</button>
+    </div>
+    <div class="acct-card"><p class="acct-label">Password</p><p class="acct-note">Change your password under Account management.</p></div>
+  </div>
+
+  <div data-page="appearance" hidden>
+    <div class="acct-card">
+      <p class="acct-label">Theme</p>
+      <div class="seg" role="group" aria-label="Theme">
+        <button id="themeDark" aria-pressed="true">Dark</button>
+        <button id="themeLight" aria-pressed="false">Light</button>
+      </div>
+    </div>
+  </div>
+
+  <div data-page="help" hidden>
+    <div class="acct-card about">
+      <p><b>I-Images</b></p>
+      <p>Version 1.3</p>
+      <p>Search any picture or wallpaper, save the ones you love, organise them into boards, and share your own pictures with the community.</p>
+    </div>
+    <div class="acct-card about">
+      <p><b>Community rules</b></p>
+      <p>Only post pictures you own or have the right to share. No nudity, violence, hate or anything that harms others. Use the Report button on anything that breaks these rules.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="infoSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Picture details">
+    <div class="sheet-head">
+      <h2>Picture details</h2>
+      <button class="sheet-x" id="infoClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+    </div>
+    <div id="infoBody"></div>
   </div>
 </div>
 
@@ -459,14 +546,22 @@ const CHIPS = [
 ];
 const IDEAS = ['phone wallpaper', 'minimal aesthetic', 'streetwear outfit', 'sunset sky', 'luxury interior', 'gold abstract', 'mountain lake', 'vintage poster'];
 
-const state = { q: '', eq: '', orient: 'all', srcFilter: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null, board: 'all', broadened: false, firstPage: true, note: '' };
-const GROUPS = { photos: ['pixabay', 'openverse', 'commons'], art: ['art', 'cleveland'], space: ['nasa'] };
+const state = { q: '', eq: '', orient: 'all', srcFilter: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null, board: 'all', eqRx: [], relax: 0, note: '' };
+const GROUPS = { photos: ['pixabay', 'openverse', 'commons', 'wikipedia'], art: ['art', 'cleveland'], space: ['nasa'] };
+let webDown = false;
+const webOn = () => !!window.MUSE_SEARCH_URL && !webDown;
 function resetSources(){
-  const inc = n => state.srcFilter === 'all' || (GROUPS[state.srcFilter] || []).indexOf(n) >= 0;
+  const f = state.srcFilter;
+  const inc = n => {
+    if (f === 'all') return webOn() ? (n === 'web' || n === 'pixabay') : n !== 'web';
+    return (GROUPS[f] || []).indexOf(n) >= 0;
+  };
   state.src = {
+    web: { page: 1, done: !inc('web') },
     pixabay: { page: 1, count: 0, done: !inc('pixabay') },
     openverse: { page: 1, done: !inc('openverse') },
     commons: { offset: 0, done: !inc('commons') },
+    wikipedia: { offset: 0, done: !inc('wikipedia') },
     art: { page: 1, done: !inc('art') },
     cleveland: { skip: 0, done: !inc('cleveland') },
     nasa: { page: 1, done: !inc('nasa') }
@@ -696,6 +791,9 @@ function cardEl(item){
   el.innerHTML =
     '<img ' + (item.thumb ? 'src="' + esc(item.thumb) + '" ' : '') + 'alt="' + esc(item.tags) + '" width="' + item.w + '" height="' + item.h + '" loading="lazy" decoding="async">' +
     '<button class="heart" aria-pressed="' + saved + '" aria-label="' + (saved ? 'Remove from saved' : 'Save') + '">' + HEART + '</button>';
+  if (item.thumb && !item.postId) {
+    el.querySelector('img').addEventListener('error', () => { if (state.view === 'explore') el.remove(); });
+  }
   if (!item.thumb && item.postId) {
     const img = el.querySelector('img');
     ensureImage(item).then(it => { if (it.thumb) img.src = it.thumb; });
@@ -735,23 +833,70 @@ function setStatus(kind, msg){
 statusEl.addEventListener('click', e => { if (e.target.closest('.retry')) loadMore(); });
 
 /* ---------- picture sources ---------- */
-const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'your', 'you', 'are', 'was', 'pic', 'pics', 'picture', 'pictures', 'image', 'images', 'photo', 'photos', 'wallpaper', 'wallpapers', 'free', 'over', 'into', 'under', 'near', 'about', 'through', 'between', 'after', 'before']);
+const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'your', 'you', 'are', 'was', 'pic', 'pics', 'picture', 'pictures', 'image', 'images', 'photo', 'photos', 'wallpaper', 'wallpapers', 'free', 'over', 'into', 'under', 'near', 'about', 'through', 'between', 'after', 'before', 'thing', 'things', 'stuff', 'some', 'any', 'all', 'nice', 'good', 'best', 'new', 'old', 'cool', 'top', 'related', 'show', 'give', 'find']);
+const normalizeQuery = q => String(q || '').replace(/\bnaija\b/gi, 'Nigeria').replace(/\bnigerians?\b/gi, 'Nigeria').trim();
 const words = q => (String(q || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) || []).filter(w => w.length >= 3 && !STOP.has(w));
 const stem = w => (w.length > 3 && w.endsWith('s')) ? w.slice(0, -1) : w;
 const plain = h => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ');
 const qNow = () => state.eq.slice(0, 100);
 
-// Keeps results that actually mention what was searched for.
+// Whole-word matching (plurals and demonyms allowed), so "lion" does not match "Lionel".
+function wordRx(w){
+  let base = w;
+  if (/ies$/.test(w) && w.length > 4) base = w.slice(0, -3) + 'y';
+  else if (/(ss|x|z|ch|sh)es$/.test(w)) base = w.slice(0, -2);
+  else if (/s$/.test(w) && !/ss$/.test(w) && w.length > 3) base = w.slice(0, -1);
+  const e = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alt = base.endsWith('y') ? '|' + e.slice(0, -1) + 'ies' : '';
+  return new RegExp('(?:^|[^\\p{L}\\p{N}])(?:' + e + '(?:s|es|n|ns|ian|ians|ed|ing|ers?)?' + alt + ')(?![\\p{L}\\p{N}])', 'iu');
+}
+function setEq(q){ state.eq = q; state.eqRx = words(q).map(wordRx); }
 function relevant(text){
-  const tk = words(state.eq).map(stem);
-  if (!tk.length) return true;
-  const hay = String(text || '').toLowerCase();
-  return tk.filter(t => hay.indexOf(t) >= 0).length >= Math.ceil(tk.length * 0.6);
+  const rx = state.eqRx;
+  if (!rx.length) return true;
+  const t = String(text || '');
+  const need = rx.length <= 2 ? rx.length : Math.ceil(rx.length * 0.6);
+  return rx.filter(r => r.test(t)).length >= need;
 }
 function shapeOk(w, h){
   if (state.orient === 'vertical') return h > w;
   if (state.orient === 'horizontal') return w > h;
   return true;
+}
+
+const hashStr = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+
+// If web search is unavailable or finds nothing, bring the free picture libraries back for this search.
+function enableFallbackSources(){
+  if (state.srcFilter !== 'all') return;
+  ['openverse', 'commons', 'wikipedia', 'art', 'cleveland', 'nasa'].forEach(n => { if (state.src[n]) state.src[n].done = false; });
+}
+
+async function fetchWeb(my){
+  const s = state.src.web;
+  if (!webOn() || !state.eq) { s.done = true; return []; }
+  const u = new URL(window.MUSE_SEARCH_URL), p = u.searchParams;
+  p.set('q', qNow()); p.set('page', s.page);
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) { s.done = true; webDown = true; enableFallbackSources(); return []; }
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const list = data.images || [];
+  if (s.page === 1 && !list.length) enableFallbackSources();
+  s.page++;
+  if (!list.length || s.page > 15) s.done = true;
+  const out = [];
+  list.forEach(l => {
+    if (!l.image || !l.thumb) return;
+    const w = Number(l.w) || 4, h = Number(l.h) || 3;
+    if (l.w && l.h && !shapeOk(w, h)) return;
+    out.push({
+      id: 'g' + hashStr(l.image), w: w, h: h, thumb: l.thumb, large: l.image,
+      page: l.link || l.image, tags: l.title || state.q, user: l.site || 'the web', src: 'Web'
+    });
+  });
+  return out;
 }
 
 async function fetchPixabay(my){
@@ -846,6 +991,38 @@ async function fetchCommons(my){
     out.push({
       id: 'c' + pg.pageid, w: info.thumbwidth, h: info.thumbheight, thumb: info.thumburl, large: large,
       page: info.descriptionurl, tags: name, user: 'Wikimedia Commons', src: 'Wikimedia Commons'
+    });
+  });
+  return out;
+}
+
+async function fetchWikipedia(my){
+  const s = state.src.wikipedia;
+  if (!state.eq) { s.done = true; return []; }
+  const u = new URL('https://en.wikipedia.org/w/api.php'), p = u.searchParams;
+  p.set('action', 'query'); p.set('format', 'json'); p.set('origin', '*');
+  p.set('generator', 'search'); p.set('gsrnamespace', '0'); p.set('gsrsearch', qNow());
+  p.set('gsrlimit', '24'); p.set('gsroffset', s.offset);
+  p.set('prop', 'pageimages|description'); p.set('piprop', 'thumbnail'); p.set('pithumbsize', '640'); p.set('pilimit', '24');
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) { s.done = true; return []; }
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const pages = data.query && data.query.pages ? Object.values(data.query.pages) : [];
+  pages.sort((a, b) => a.index - b.index);
+  if (data.continue && data.continue.gsroffset != null) s.offset = data.continue.gsroffset; else s.done = true;
+  if (!pages.length) s.done = true;
+  const out = [];
+  pages.forEach(pg => {
+    const t = pg.thumbnail;
+    if (!t || !t.source || /\.svg/i.test(t.source) || t.width < 300) return;
+    if (!shapeOk(t.width, t.height)) return;
+    if (!relevant(pg.title + ' ' + (pg.description || ''))) return;
+    out.push({
+      id: 'w' + pg.pageid, w: t.width, h: t.height, thumb: t.source, large: t.source,
+      page: 'https://en.wikipedia.org/?curid=' + pg.pageid, tags: pg.title + (pg.description ? ' - ' + pg.description : ''),
+      user: 'Wikipedia', src: 'Wikipedia'
     });
   });
   return out;
@@ -954,7 +1131,7 @@ function interleave(lists){
 
 function setNote(){ const n = $('#note'); n.textContent = state.note; n.hidden = !state.note || state.view !== 'explore'; }
 
-const FETCHERS = { pixabay: fetchPixabay, openverse: fetchOpenverse, commons: fetchCommons, art: fetchArt, cleveland: fetchCleveland, nasa: fetchNasa };
+const FETCHERS = { web: fetchWeb, pixabay: fetchPixabay, openverse: fetchOpenverse, commons: fetchCommons, wikipedia: fetchWikipedia, art: fetchArt, cleveland: fetchCleveland, nasa: fetchNasa };
 
 async function loadMore(){
   if (state.view === 'community') return loadCommunity();
@@ -964,7 +1141,7 @@ async function loadMore(){
   const my = state.reqId;
   try {
     const names = Object.keys(FETCHERS).filter(n => !state.src[n].done);
-    const results = await Promise.allSettled(names.map(n => FETCHERS[n](my).catch(e => { if (n !== 'pixabay') state.src[n].done = true; throw e; })));
+    const results = await Promise.allSettled(names.map(n => FETCHERS[n](my).catch(e => { if (n !== 'pixabay') state.src[n].done = true; if (n === 'web') { webDown = true; enableFallbackSources(); } throw e; })));
     if (my !== state.reqId) return;
 
     const lists = []; let firstErr = null;
@@ -976,13 +1153,13 @@ async function loadMore(){
       state.items.push(it); place(it);
     });
 
-    if (state.firstPage) {
-      state.firstPage = false;
-      const tk = words(state.q);
-      if (state.items.length < 6 && tk.length > 1 && !state.broadened) {
-        state.broadened = true;
-        state.eq = tk.slice().sort((a, b) => b.length - a.length)[0];
-        state.note = 'Few matches for "' + state.q + '", so here are pictures for "' + state.eq + '" too.';
+    if (allDone() && state.items.length < 6) {
+      const tk = [...new Set(words(normalizeQuery(state.q)))].sort((a, b) => b.length - a.length);
+      const levels = tk.length > 2 ? [tk.slice(0, 2), tk.slice(0, 1)] : tk.length === 2 ? [tk.slice(0, 1)] : [];
+      if (state.relax < levels.length) {
+        const next = levels[state.relax++];
+        setEq(next.join(' '));
+        state.note = 'Showing pictures for "' + state.eq + '" too.';
         resetSources(); setNote();
       }
     }
@@ -1005,7 +1182,7 @@ async function loadMore(){
 new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '900px' }).observe(sentinel);
 
 function startSearch(){
-  state.reqId++; state.items = []; state.eq = state.q; state.broadened = false; state.firstPage = true; state.note = '';
+  state.reqId++; state.items = []; setEq(normalizeQuery(state.q)); state.relax = 0; state.note = '';
   resetSources(); state.loading = false;
   if (state.view !== 'explore') setView('explore', true);
   setNote(); buildCols(); scrollTo(0, 0); updateChips(); loadMore();
@@ -1105,9 +1282,10 @@ $('#postGo').addEventListener('click', async () => {
   if (!postData || !me) return;
   const btn = $('#postGo'), msg = $('#postMsg'); btn.disabled = true; msg.textContent = '';
   try {
-    const authorPhoto = profile.photo ? await shrinkImage(profile.photo, 96) : '';
+    const hide = !!profile.anon;
+    const authorPhoto = (!hide && profile.photo) ? await shrinkImage(profile.photo, 96) : '';
     await window.museDB.createPost({
-      uid: me.uid, author: me.name || (me.email ? me.email.split('@')[0] : 'Member'), authorPhoto: authorPhoto,
+      uid: me.uid, author: hide ? 'Member' : (me.name || (me.email ? me.email.split('@')[0] : 'Member')), authorPhoto: authorPhoto,
       title: $('#postTitle').value.trim().slice(0, 80), img: postData.img, w: postData.w, h: postData.h, createdAt: Date.now()
     });
     closePost(); toast('Posted');
@@ -1255,8 +1433,7 @@ function sourceLink(item){
   if (item.src === 'Community') {
     return (item.authorPhoto ? '<img class="mini-av" src="' + esc(item.authorPhoto) + '" alt="">' : '') + 'Posted by ' + esc(item.user);
   }
-  if (item.src === 'Pixabay') return '<a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>';
-  return '<a href="' + esc(item.page) + '" target="_blank" rel="noopener">View on ' + esc(item.src) + '</a>';
+  return '';
 }
 
 function renderViewer(){
@@ -1272,7 +1449,8 @@ function renderViewer(){
     big.src = item.large;
   }
   $('#vCount').textContent = vList.length > 1 ? (vIdx + 1) + ' / ' + vList.length : '';
-  $('#vCap').innerHTML = esc(item.tags) + ' &middot; ' + sourceLink(item);
+  const link = sourceLink(item);
+  $('#vCap').innerHTML = esc(item.tags) + (link ? ' &middot; ' + link : '');
   const ex = $('#vExtra');
   if (item.src === 'Community' && me) { ex.hidden = false; ex.textContent = item.uid === me.uid ? 'Delete my post' : 'Report this picture'; }
   else ex.hidden = true;
@@ -1295,7 +1473,7 @@ function closeViewer(){
 }
 function closeViewerNow(){ if (history.state && history.state.muse) history.back(); else closeViewer(); }
 $('#vClose').addEventListener('click', closeViewerNow);
-addEventListener('popstate', () => { if (!viewer.hidden) closeViewer(); });
+addEventListener('popstate', () => { if (!viewer.hidden) closeViewer(); else if (!$('#setSheet').hidden) closeSettings(); });
 
 function navigate(d){
   if (!current) return;
@@ -1379,6 +1557,20 @@ stage.addEventListener('wheel', e => {
   zoomTo(Math.min(5, Math.max(1, vz.s * (e.deltaY < 0 ? 1.2 : 0.83))), e.clientX, e.clientY);
 }, { passive: false });
 
+$('#vInfo').addEventListener('click', () => {
+  if (!current) return;
+  const it = current;
+  let html = '<p class="info-title">' + esc(it.tags) + '</p>';
+  if (it.src === 'Community') html += '<p class="sheet-note">Posted by ' + esc(it.user) + '.</p>';
+  else {
+    html += '<p class="sheet-note">Picture by ' + esc(it.user || 'an unknown creator') + (it.src && it.src !== it.user ? ' (' + esc(it.src) + ')' : '') + '.</p>';
+    if (it.page) html += '<a class="auth-link" href="' + esc(it.page) + '" target="_blank" rel="noopener">View the original page</a>';
+    html += '<p class="sheet-note">If you reuse a picture, some creators need to be credited. The original page shows the details.</p>';
+  }
+  $('#infoBody').innerHTML = html; $('#infoSheet').hidden = false;
+});
+$('#infoClose').addEventListener('click', () => { $('#infoSheet').hidden = true; });
+$('#infoSheet').addEventListener('click', e => { if (e.target.id === 'infoSheet') $('#infoSheet').hidden = true; });
 $('#vSave').addEventListener('click', () => { if (current) toggleFav(savesMap.get(current.id) || current); });
 $('#vBoard').addEventListener('click', () => { if (current) openBoardSheet(savesMap.get(current.id) || current); });
 
@@ -1507,7 +1699,7 @@ function showAuthForm(msg){
 }
 function showAuth(){
   if (!viewer.hidden) closeViewer();
-  $('#boardSheet').hidden = true; $('#postSheet').hidden = true;
+  $('#boardSheet').hidden = true; $('#postSheet').hidden = true; $('#setSheet').hidden = true; $('#infoSheet').hidden = true;
   authEl.hidden = false; document.body.style.overflow = 'hidden';
   if (authReady) showAuthForm();
   $('#authPass').value = '';
@@ -1604,7 +1796,7 @@ async function tryUnlock(){
 }
 function showLock(){
   if (!viewer.hidden) closeViewer();
-  $('#boardSheet').hidden = true; $('#postSheet').hidden = true;
+  $('#boardSheet').hidden = true; $('#postSheet').hidden = true; $('#setSheet').hidden = true; $('#infoSheet').hidden = true;
   lockEl.hidden = false; document.body.style.overflow = 'hidden';
   tryUnlock();
 }
@@ -1625,24 +1817,24 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------- profile + account page ---------- */
-let profile = { photo: '', bio: '' };
+let profile = { photo: '', bio: '', anon: false };
 let cloudStarted = false;
 function loadProfileLocal(){
-  try { profile = Object.assign({ photo: '', bio: '' }, JSON.parse(localStorage.getItem('muse:profile:' + uid) || '{}')); }
-  catch { profile = { photo: '', bio: '' }; }
+  try { profile = Object.assign({ photo: '', bio: '', anon: false }, JSON.parse(localStorage.getItem('muse:profile:' + uid) || '{}')); }
+  catch { profile = { photo: '', bio: '', anon: false }; }
 }
 function saveProfileLocal(){ try { localStorage.setItem('muse:profile:' + uid, JSON.stringify(profile)); } catch {} }
 async function syncProfileFromCloud(){
   if (!cloudReady() || !isOnline()) return;
   try {
     const p = await window.museDB.getProfile(uid);
-    if (p) { profile = Object.assign({ photo: '', bio: '' }, p); saveProfileLocal(); renderAccount(); }
+    if (p) { profile = Object.assign({ photo: '', bio: '', anon: false }, p); saveProfileLocal(); renderAccount(); }
   } catch {}
 }
 async function saveProfile(patch){
   profile = Object.assign({}, profile, patch); saveProfileLocal(); renderAccount();
   if (cloudReady()) {
-    try { await window.museDB.setProfile(uid, { photo: profile.photo || '', bio: profile.bio || '', updatedAt: Date.now() }); }
+    try { await window.museDB.setProfile(uid, { photo: profile.photo || '', bio: profile.bio || '', anon: !!profile.anon, updatedAt: Date.now() }); }
     catch { cloudFail(); }
   }
 }
@@ -1668,9 +1860,13 @@ function renderAccount(){
   $('#acctBio').textContent = profile.bio || 'No bio yet. Add one below.';
   if (document.activeElement !== $('#nameInput')) $('#nameInput').value = name;
   if (document.activeElement !== $('#bioInput')) $('#bioInput').value = profile.bio || '';
-  const av = $('#avatar'), photo = profile.photo || (me && me.photo) || '';
-  if (photo) av.innerHTML = '<img src="' + esc(photo) + '" alt="" referrerpolicy="no-referrer">';
-  else av.textContent = ((name || (me && me.email) || '?').trim()[0] || '?').toUpperCase();
+  const photo = profile.photo || (me && me.photo) || '';
+  document.querySelectorAll('.avatar').forEach(av => {
+    if (photo) av.innerHTML = '<img src="' + esc(photo) + '" alt="" referrerpolicy="no-referrer">';
+    else av.textContent = ((name || (me && me.email) || '?').trim()[0] || '?').toUpperCase();
+  });
+  $('#acctMail2').textContent = (me && me.email) || '';
+  $('#anonSwitch').setAttribute('aria-checked', !!profile.anon);
   $('#removePhoto').hidden = !profile.photo;
   $('#statSaved').textContent = saves.length;
   $('#statBoards').textContent = boards.length;
@@ -1717,6 +1913,61 @@ $('#changePw').addEventListener('click', async () => {
   catch { toast('Could not send the link. Try again.'); }
 });
 
+/* settings pages (Pinterest-style) */
+const setSheet = $('#setSheet');
+const PAGE_TITLES = { edit: 'Edit profile', account: 'Account management', privacy: 'Privacy and data', security: 'Security', appearance: 'Appearance', help: 'Help and about' };
+function openSettings(page){
+  setSheet.querySelectorAll('[data-page]').forEach(el => { el.hidden = el.dataset.page !== page; });
+  $('#setTitle').textContent = PAGE_TITLES[page] || '';
+  renderAccount();
+  setSheet.hidden = false; setSheet.scrollTop = 0;
+  history.pushState({ muse: 2 }, '');
+}
+function closeSettings(){ setSheet.hidden = true; }
+$('#setList').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openSettings(b.dataset.open); });
+$('#editProfileBtn').addEventListener('click', () => openSettings('edit'));
+$('#setBack').addEventListener('click', () => { if (history.state && history.state.muse === 2) history.back(); else closeSettings(); });
+$('#changePhoto').addEventListener('click', () => $('#avatarFile').click());
+
+$('#anonSwitch').addEventListener('click', async () => {
+  await saveProfile({ anon: !profile.anon });
+  toast(profile.anon ? 'Your posts will show as Member' : 'Your name will show on posts');
+});
+$('#clearHist').addEventListener('click', () => { try { localStorage.removeItem(histKey()); } catch {} toast('Search history cleared'); });
+$('#exportData').addEventListener('click', () => {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    profile: { name: (me && me.name) || '', email: (me && me.email) || '', bio: profile.bio || '' },
+    boards: boards,
+    saved: saves.map(x => ({ id: x.id, title: x.tags, image: x.large || x.thumb || '', page: x.page || '', boards: x.boards || [] }))
+  };
+  saveBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), 'i-images-my-data.json');
+  toast('Your data was downloaded');
+});
+$('#deleteAcct').addEventListener('click', async () => {
+  if (!me || !window.museAuth) return;
+  if (!isOnline()) { toast('Deleting your account needs internet'); return; }
+  if (!confirm('Delete your account? Your profile, saved pictures, boards and posts will be removed for good.')) return;
+  try {
+    if (me.provider === 'password') {
+      const pw = prompt('Type your password to confirm');
+      if (pw === null) return;
+      await window.museAuth.reauth(pw);
+    } else await window.museAuth.reauth();
+    const gone = uid;
+    if (window.museDB) { window.museDB.stop(); await window.museDB.deleteAllData(gone); }
+    await window.museAuth.deleteAccount();
+    ['favs', 'boards', 'profile', 'hist', 'lock', 'migrated'].forEach(k => { try { localStorage.removeItem('muse:' + k + ':' + gone); } catch {} });
+    toast('Your account was deleted');
+  } catch (err) {
+    const c = err && err.code || '';
+    if (c === 'auth/wrong-password' || c === 'auth/invalid-credential') toast('That password is not correct');
+    else if (c === 'auth/requires-recent-login') toast('For safety, log out, log in again, then try again');
+    else toast('Could not delete your account. Try again.');
+    if (window.museDB && me) { cloudStarted = false; startCloud(); }
+  }
+});
+
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
   try { localStorage.setItem('muse:theme', t); } catch {}
@@ -1750,7 +2001,7 @@ addEventListener('muse-auth', e => {
   if (!u) {
     if (window.museDB) window.museDB.stop();
     cloudStarted = false; hideLock(); me = null; uid = 'guest'; saves = []; boards = []; savesMap = new Map();
-    profile = { photo: '', bio: '' }; showAuth(); return;
+    profile = { photo: '', bio: '', anon: false }; showAuth(); return;
   }
   const same = me && me.uid === u.uid;
   me = u; uid = u.uid;

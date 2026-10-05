@@ -1,7 +1,7 @@
 // Accounts (email + Google) and cloud data (saved pictures, boards, community) via Firebase.
 const cfg = window.MUSE_FIREBASE;
 const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
-const slim = u => u ? { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '', created: (u.metadata && u.metadata.creationTime) || '' } : null;
+const slim = u => u ? { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '', created: (u.metadata && u.metadata.creationTime) || '', provider: (u.providerData && u.providerData[0] && u.providerData[0].providerId) || '' } : null;
 const clean = o => JSON.parse(JSON.stringify(o));
 
 function makeDB(F, db) {
@@ -46,6 +46,20 @@ function makeDB(F, db) {
       parts.push(F.limit(12));
       const snap = await F.getDocs(F.query(...parts));
       return { docs: snap.docs, items: snap.docs.map(d => Object.assign({ id: d.id }, d.data())) };
+    },
+    async deleteAllData(uid) {
+      const wipe = async q => {
+        const snap = await F.getDocs(q);
+        for (let i = 0; i < snap.docs.length; i += 400) {
+          const b = F.writeBatch(db);
+          snap.docs.slice(i, i + 400).forEach(d => b.delete(d.ref));
+          await b.commit();
+        }
+      };
+      await wipe(F.collection(db, 'users', uid, 'saves'));
+      await wipe(F.collection(db, 'users', uid, 'boards'));
+      await wipe(F.collection(db, 'users', uid, 'meta'));
+      await wipe(F.query(F.collection(db, 'posts'), F.where('uid', '==', uid)));
     },
     async countPosts(uid) {
       const s = await F.getCountFromServer(F.query(F.collection(db, 'posts'), F.where('uid', '==', uid)));
@@ -98,6 +112,12 @@ async function start() {
       await A.updateProfile(auth.currentUser, { displayName: name });
       emit('muse-auth', { user: slim(auth.currentUser) });
     },
+    async reauth(password) {
+      const u = auth.currentUser;
+      if (password !== undefined) await A.reauthenticateWithCredential(u, A.EmailAuthProvider.credential(u.email, password));
+      else await A.reauthenticateWithPopup(u, new A.GoogleAuthProvider());
+    },
+    deleteAccount: () => A.deleteUser(auth.currentUser),
     signOut: () => A.signOut(auth)
   };
   A.onAuthStateChanged(auth, user => emit('muse-auth', { user: slim(user) }));
