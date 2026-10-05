@@ -1,33 +1,92 @@
-// Sign-up and log-in, powered by Firebase Authentication (email + password).
+// Accounts (email + Google) and cloud data (saved pictures, boards, community) via Firebase.
 const cfg = window.MUSE_FIREBASE;
 const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
-const slim = u => u ? { uid: u.uid, email: u.email, name: u.displayName || '' } : null;
+const slim = u => u ? { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '' } : null;
+const clean = o => JSON.parse(JSON.stringify(o));
+
+function makeDB(F, db) {
+  let unsubs = [];
+  const err = e => emit('muse-db-error', { message: (e && e.code) || String(e) });
+  return {
+    listen(uid) {
+      this.stop();
+      unsubs.push(F.onSnapshot(
+        F.query(F.collection(db, 'users', uid, 'saves'), F.orderBy('savedAt', 'desc')),
+        snap => emit('muse-saves', { items: snap.docs.map(d => d.data()), fromCache: snap.metadata.fromCache }), err));
+      unsubs.push(F.onSnapshot(
+        F.query(F.collection(db, 'users', uid, 'boards'), F.orderBy('createdAt', 'asc')),
+        snap => emit('muse-boards', { items: snap.docs.map(d => Object.assign({ id: d.id }, d.data())) }), err));
+    },
+    stop() { unsubs.forEach(u => u()); unsubs = []; },
+    addSave: (uid, rec) => F.setDoc(F.doc(db, 'users', uid, 'saves', rec.id), clean(rec)),
+    removeSave: (uid, id) => F.deleteDoc(F.doc(db, 'users', uid, 'saves', id)),
+    setSaveBoards: (uid, id, boards) => F.updateDoc(F.doc(db, 'users', uid, 'saves', id), { boards }),
+    async addBoard(uid, name) {
+      const ref = await F.addDoc(F.collection(db, 'users', uid, 'boards'), { name, createdAt: Date.now() });
+      return ref.id;
+    },
+    async deleteBoard(uid, id, saveIds) {
+      const b = F.writeBatch(db);
+      b.delete(F.doc(db, 'users', uid, 'boards', id));
+      saveIds.forEach(sid => b.update(F.doc(db, 'users', uid, 'saves', sid), { boards: F.arrayRemove(id) }));
+      await b.commit();
+    },
+    async createPost(post) {
+      const ref = await F.addDoc(F.collection(db, 'posts'), clean(post));
+      return ref.id;
+    },
+    async loadPosts(cursor) {
+      const parts = [F.collection(db, 'posts'), F.orderBy('createdAt', 'desc')];
+      if (cursor) parts.push(F.startAfter(cursor));
+      parts.push(F.limit(12));
+      const snap = await F.getDocs(F.query(...parts));
+      return { docs: snap.docs, items: snap.docs.map(d => Object.assign({ id: d.id }, d.data())) };
+    },
+    async getPost(id) {
+      const s = await F.getDoc(F.doc(db, 'posts', id));
+      return s.exists() ? s.data() : null;
+    },
+    deletePost: id => F.deleteDoc(F.doc(db, 'posts', id)),
+    report: (postId, uid, reason) => F.addDoc(F.collection(db, 'reports'), { postId, uid, reason, createdAt: Date.now() })
+  };
+}
 
 async function start() {
+  const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
+  let A, fbApp, auth;
   try {
-    const V = '10.12.2';
-    const [{ initializeApp }, A] = await Promise.all([
-      import('https://www.gstatic.com/firebasejs/' + V + '/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/' + V + '/firebase-auth.js')
-    ]);
-    const auth = A.getAuth(initializeApp(cfg));
-    window.museAuth = {
-      async signUp(name, email, password) {
-        const cred = await A.createUserWithEmailAndPassword(auth, email, password);
-        if (name) {
-          await A.updateProfile(cred.user, { displayName: name });
-          emit('muse-auth', { user: slim(cred.user) });
-        }
-        return cred.user;
-      },
-      signIn: (email, password) => A.signInWithEmailAndPassword(auth, email, password),
-      reset: email => A.sendPasswordResetEmail(auth, email),
-      signOut: () => A.signOut(auth)
-    };
-    A.onAuthStateChanged(auth, user => emit('muse-auth', { user: slim(user) }));
-  } catch (err) {
-    emit('muse-auth-error', { message: String(err) });
+    const [appMod, authMod] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js')]);
+    A = authMod; fbApp = appMod.initializeApp(cfg); auth = A.getAuth(fbApp);
+  } catch (e) {
+    emit('muse-auth-error', { message: String(e) });
+    return;
   }
+
+  // Cloud data is optional: if it fails to load, the app falls back to saving on the phone.
+  try {
+    const F = await import(base + 'firebase-firestore.js');
+    window.museDB = makeDB(F, F.getFirestore(fbApp));
+  } catch (e) { /* stay in phone-only mode */ }
+
+  window.museAuth = {
+    async signUp(name, email, password) {
+      const cred = await A.createUserWithEmailAndPassword(auth, email, password);
+      if (name) {
+        await A.updateProfile(cred.user, { displayName: name });
+        emit('muse-auth', { user: slim(auth.currentUser) });
+      }
+      return cred.user;
+    },
+    signIn: (email, password) => A.signInWithEmailAndPassword(auth, email, password),
+    google: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
+    reset: email => A.sendPasswordResetEmail(auth, email),
+    async updateName(name) {
+      await A.updateProfile(auth.currentUser, { displayName: name });
+      emit('muse-auth', { user: slim(auth.currentUser) });
+    },
+    signOut: () => A.signOut(auth)
+  };
+  A.onAuthStateChanged(auth, user => emit('muse-auth', { user: slim(user) }));
 }
 
 if (cfg && cfg.apiKey) start();

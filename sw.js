@@ -1,4 +1,4 @@
-const CACHE = 'i-images-v2';
+const CACHE = 'i-images-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './config.js', './auth.js'];
 
 self.addEventListener('install', e => {

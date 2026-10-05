@@ -16,6 +16,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script>
+try { var t = localStorage.getItem('muse:theme') || 'dark'; document.documentElement.setAttribute('data-theme', t);
+  document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'light' ? '#FAF6E9' : '#0E0C08'); } catch (e) {}
+</script>
 <style>
 :root{
   --bg:#0E0C08;
@@ -24,10 +28,23 @@
   --accent:#D4AF37;
   --accent-soft:#F0D679;
   --on-accent:#0E0C08;
+  --gold-text:#D4AF37;
+  --link:#F0D679;
   --card:#1A1710;
   --line:#2E2916;
   --ph:#26221A;
   --err:#FF8A7A;
+}
+:root[data-theme="light"]{
+  --bg:#FAF6E9;
+  --ink:#1B1608;
+  --muted:#6F6444;
+  --gold-text:#8A6A0C;
+  --link:#8A6A0C;
+  --card:#FFFFFF;
+  --line:#E6DEC2;
+  --ph:#EDE6CC;
+  --err:#B3261E;
 }
 *{box-sizing:border-box;margin:0}
 html{-webkit-text-size-adjust:100%}
@@ -46,26 +63,38 @@ a{color:inherit}
 /* header */
 .top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 14px 8px}
 .brand-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;min-height:38px}
-.logo{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1;color:var(--accent)}
+.logo{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1;color:var(--gold-text)}
 #install{padding:8px 16px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:700}
 .search{position:relative}
-.search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.search > svg{position:absolute;left:16px;top:25px;transform:translateY(-50%);width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
 .search input{
   width:100%;height:50px;border-radius:25px;border:1px solid var(--line);background:var(--card);
   padding:0 18px 0 46px;font:inherit;font-size:16px;color:var(--ink);appearance:none;-webkit-appearance:none;
 }
 .search input::placeholder{color:var(--muted)}
+.suggest{position:absolute;left:0;right:0;top:56px;z-index:8;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 6px;max-height:55dvh;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.sg-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 4px;font-size:13px;color:var(--muted)}
+.sg-head button{color:var(--link);font-size:13px;text-decoration:underline}
+.sg-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 12px;border-radius:12px;font-size:16px}
+.sg-item svg{width:18px;height:18px;flex:none;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sg-item:active{background:var(--ph)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 4px;margin:0 -14px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;padding:8px 15px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:500}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.chip.add{border-style:dashed;color:var(--link)}
 .shape{display:flex;gap:18px;padding:8px 2px 2px;font-size:14px}
 .shape button{color:var(--muted);padding:4px 0;border-bottom:2px solid transparent}
 .shape button[aria-pressed="true"]{color:var(--ink);font-weight:600;border-color:var(--accent)}
 .page-title{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;padding:2px 2px 4px}
+.link-btn{color:var(--link);font-size:14px;text-decoration:underline;padding:8px 2px}
+.comm-bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.post-btn{padding:9px 16px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:14px}
+
 body:not(.saved) .saved-only{display:none}
 body:not(.account) .account-only{display:none}
-body.saved .explore-only,body.account .explore-only{display:none}
+body:not(.community) .comm-only{display:none}
+body.saved .explore-only,body.account .explore-only,body.community .explore-only{display:none}
 body.account #grid,body.account #status{display:none}
 
 /* grid */
@@ -88,12 +117,23 @@ body.account #grid,body.account #status{display:none}
 @media (prefers-reduced-motion:reduce){.spinner{animation-duration:3s}}
 
 /* account page */
-.account-panel{padding:10px 16px}
+.account-panel{padding:10px 16px;display:flex;flex-direction:column;gap:14px}
 .acct-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
-.acct-name{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em}
-.acct-mail{color:var(--muted);margin-top:2px;word-break:break-all}
-.acct-note{color:var(--muted);font-size:14px;margin:14px 2px 18px}
-.acct-btn{width:100%;height:50px;border-radius:25px;border:1px solid var(--accent);color:var(--accent-soft);font-weight:700}
+.acct-top{display:flex;align-items:center;gap:14px}
+.avatar{width:64px;height:64px;flex:none;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:28px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.acct-name{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;line-height:1.2}
+.acct-mail{color:var(--muted);margin-top:2px;word-break:break-all;font-size:14px}
+.acct-label{font-size:14px;color:var(--muted);margin-bottom:10px}
+.acct-note{color:var(--muted);font-size:14px;margin:0 2px}
+.acct-btn{width:100%;height:50px;border-radius:25px;border:1px solid var(--accent);color:var(--link);font-weight:700}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;height:44px;border-radius:22px;border:1px solid var(--line);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.inline-form{display:flex;gap:8px;margin-top:14px}
+.inline-form input{flex:1;min-width:0;height:46px;border-radius:23px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 16px;font:inherit;font-size:16px;appearance:none;-webkit-appearance:none}
+.inline-form input:focus{border-color:var(--accent);outline:none}
+.inline-form button{height:46px;padding:0 18px;border-radius:23px;background:var(--accent);color:var(--on-accent);font-weight:700;flex:none}
 
 /* bottom tabs */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
@@ -112,10 +152,28 @@ body.account #grid,body.account #status{display:none}
 .v-info{padding:10px 16px calc(14px + env(safe-area-inset-bottom))}
 #vCap{font-size:14px;color:rgba(255,255,255,.72);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #vCap a{text-decoration:underline}
-.v-actions{display:flex;gap:10px}
-.v-actions button{flex:1;height:48px;border-radius:24px;background:rgba(255,255,255,.14);font-weight:600;font-size:15px}
+.v-actions{display:flex;gap:10px;margin-bottom:10px}
+.v-actions button{flex:1;height:46px;border-radius:23px;background:rgba(255,255,255,.14);font-weight:600;font-size:15px;color:#fff}
 .v-actions button.primary{background:var(--accent);color:var(--on-accent)}
 .v-actions button[aria-pressed="true"]{background:var(--accent-soft);color:var(--on-accent)}
+.v-extra{display:block;margin:2px auto 0;color:rgba(255,255,255,.7);font-size:14px;text-decoration:underline;padding:6px 10px}
+
+/* bottom sheets */
+.sheet-wrap{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}
+.sheet{width:100%;max-height:88dvh;overflow-y:auto;background:var(--card);color:var(--ink);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sheet-head h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:21px;letter-spacing:-.02em}
+.sheet-x{width:40px;height:40px;border-radius:50%;background:var(--ph);display:grid;place-items:center}
+.sheet-x svg{width:18px;height:18px;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;fill:none}
+.board-row{display:flex;justify-content:space-between;align-items:center;width:100%;padding:14px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:16px}
+.tick{width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;font-weight:800;color:transparent}
+.board-row[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sheet-note{font-size:14px;color:var(--muted);margin:10px 2px}
+.file-btn{display:flex;align-items:center;justify-content:center;height:50px;border-radius:25px;border:1px dashed var(--accent);color:var(--link);font-weight:700;cursor:pointer;margin-top:10px}
+.file-btn input{display:none}
+.post-preview{display:block;max-width:100%;max-height:260px;border-radius:12px;margin:12px auto 0}
+.sheet .wide-btn{width:100%;height:50px;border-radius:25px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:16px;margin-top:14px}
+.sheet .wide-btn:disabled{opacity:.5}
 
 #toast{
   position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;
@@ -123,12 +181,11 @@ body.account #grid,body.account #status{display:none}
   opacity:0;pointer-events:none;transition:opacity .2s;max-width:88vw;text-align:center;
 }
 #toast.show{opacity:1}
-#viewer:not([hidden]) ~ #toast{bottom:calc(120px + env(safe-area-inset-bottom))}
 
 /* sign up / log in */
 #auth{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;display:flex;justify-content:center;padding:calc(36px + env(safe-area-inset-top)) 22px calc(28px + env(safe-area-inset-bottom))}
 .auth-card{width:100%;max-width:380px;margin:auto 0}
-.auth-logo{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:46px;letter-spacing:-.04em;line-height:1;color:var(--accent)}
+.auth-logo{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:46px;letter-spacing:-.04em;line-height:1;color:var(--gold-text)}
 .auth-tag{margin:10px 0 26px;color:var(--muted)}
 .auth-tabs{display:flex;gap:24px;margin-bottom:18px}
 .auth-tabs button{color:var(--muted);padding:6px 0;font-size:17px;border-bottom:2px solid transparent}
@@ -139,9 +196,11 @@ body.account #grid,body.account #status{display:none}
 .field input:focus{border-color:var(--accent);outline:none}
 .auth-btn{width:100%;height:52px;border-radius:26px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:16px;margin-top:6px}
 .auth-btn:disabled{opacity:.55}
+.g-btn{width:100%;height:52px;border-radius:26px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:16px;margin-top:12px}
+.auth-or{text-align:center;color:var(--muted);font-size:14px;margin-top:14px}
 .auth-msg{min-height:22px;margin:12px 2px 4px;font-size:14px;color:var(--err)}
-.auth-msg.ok{color:var(--accent-soft)}
-.auth-link{color:var(--accent-soft);font-size:14px;padding:8px 2px;text-decoration:underline}
+.auth-msg.ok{color:var(--link)}
+.auth-link{color:var(--link);font-size:14px;padding:8px 2px;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -154,6 +213,7 @@ body.account #grid,body.account #status{display:none}
   <form class="search explore-only" id="searchForm" role="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input id="q" type="search" inputmode="search" enterkeyhint="search" placeholder="Search any picture or wallpaper" aria-label="Search pictures" autocomplete="off">
+    <div class="suggest" id="suggest" hidden></div>
   </form>
   <div class="chips explore-only" id="chips" aria-label="Quick searches"></div>
   <div class="shape explore-only" id="shape" aria-label="Picture shape">
@@ -161,17 +221,36 @@ body.account #grid,body.account #status{display:none}
     <button data-o="vertical" aria-pressed="false">Portrait</button>
     <button data-o="horizontal" aria-pressed="false">Landscape</button>
   </div>
+  <div class="comm-only comm-bar">
+    <h1 class="page-title">Community</h1>
+    <button class="post-btn" id="postBtn">Post a picture</button>
+  </div>
   <h1 class="page-title saved-only">Saved</h1>
+  <div class="chips saved-only" id="boardChips" aria-label="Boards"></div>
+  <button class="link-btn saved-only" id="boardDelete" hidden>Delete this board</button>
   <h1 class="page-title account-only">Account</h1>
 </header>
 
 <main>
   <section class="account-panel account-only">
     <div class="acct-card">
-      <p class="acct-name" id="acctName"></p>
-      <p class="acct-mail" id="acctMail"></p>
+      <div class="acct-top">
+        <div class="avatar" id="avatar" aria-hidden="true"></div>
+        <div><p class="acct-name" id="acctName"></p><p class="acct-mail" id="acctMail"></p></div>
+      </div>
+      <form class="inline-form" id="nameForm">
+        <input id="nameInput" type="text" maxlength="40" placeholder="Your name" aria-label="Your name" autocomplete="name">
+        <button type="submit">Save name</button>
+      </form>
     </div>
-    <p class="acct-note">Pictures you save are kept on this phone, under this account.</p>
+    <div class="acct-card">
+      <p class="acct-label">Appearance</p>
+      <div class="seg" role="group" aria-label="Appearance">
+        <button id="themeDark" aria-pressed="true">Dark</button>
+        <button id="themeLight" aria-pressed="false">Light</button>
+      </div>
+    </div>
+    <p class="acct-note" id="acctSync"></p>
     <button class="acct-btn" id="logout">Log out</button>
   </section>
   <div id="grid"></div>
@@ -183,6 +262,10 @@ body.account #grid,body.account #status{display:none}
   <button id="tabExplore" aria-current="page">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
     Explore
+  </button>
+  <button id="tabCommunity" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.500-6s6.500 2.4 6.500 6"/><path d="M16 4.700a3.500 3.500 0 010 6.600M18 14.300c2.300.8 3.500 2.700 3.500 5.700"/></svg>
+    Community
   </button>
   <button id="tabSaved">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -205,9 +288,43 @@ body.account #grid,body.account #status{display:none}
     <p id="vCap"></p>
     <div class="v-actions">
       <button id="vSave" aria-pressed="false">Save</button>
-      <button id="vDl" class="primary">Download</button>
+      <button id="vBoard">Boards</button>
       <button id="vShare">Share</button>
     </div>
+    <div class="v-actions">
+      <button id="vDl" class="primary">Download</button>
+      <button id="vWall">Wallpaper</button>
+    </div>
+    <button class="v-extra" id="vExtra" hidden></button>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="boardSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Add to a board">
+    <div class="sheet-head">
+      <h2>Add to a board</h2>
+      <button class="sheet-x" id="boardClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+    </div>
+    <div id="boardList"></div>
+    <form class="inline-form" id="boardNew">
+      <input id="boardName" type="text" maxlength="40" placeholder="New board name" aria-label="New board name">
+      <button type="submit">Create</button>
+    </form>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="postSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Post a picture">
+    <div class="sheet-head">
+      <h2>Post a picture</h2>
+      <button class="sheet-x" id="postClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+    </div>
+    <label class="file-btn"><input id="postFile" type="file" accept="image/*">Choose a picture</label>
+    <img class="post-preview" id="postPreview" alt="Preview" hidden>
+    <div class="inline-form" style="margin-top:12px"><input id="postTitle" type="text" maxlength="80" placeholder="Add a title (optional)" aria-label="Title"></div>
+    <p class="sheet-note">Only post pictures you own or have the right to share. Nothing harmful or explicit. Everyone using I-Images can see your post.</p>
+    <p class="auth-msg" id="postMsg" role="alert"></p>
+    <button class="wide-btn" id="postGo" disabled>Post</button>
   </div>
 </div>
 
@@ -226,6 +343,8 @@ body.account #grid,body.account #status{display:none}
       <label class="field"><span>Password</span><input id="authPass" type="password" autocomplete="current-password"></label>
       <p class="auth-msg" id="authMsg" role="alert"></p>
       <button class="auth-btn" id="authSubmit" type="submit">Log in</button>
+      <p class="auth-or">or</p>
+      <button class="g-btn" id="googleBtn" type="button">Continue with Google</button>
       <button class="auth-link" id="authForgot" type="button">Forgot password?</button>
     </form>
   </div>
@@ -237,6 +356,7 @@ body.account #grid,body.account #status{display:none}
 const API_KEY = '57880364-a3121a56fc7d3bace40f9249d';
 const PIXABAY_URL = 'https://pixabay.com/api/';
 const COMMONS_URL = 'https://commons.wikimedia.org/w/api.php';
+const ARTIC_URL = 'https://api.artic.edu/api/v1/artworks/search';
 const PER_PAGE = 30;
 
 const $ = s => document.querySelector(s);
@@ -248,6 +368,7 @@ const CHIPS = [
   ['Wallpapers', 'wallpaper', 'vertical'],
   ['Aesthetic', 'aesthetic'],
   ['Fashion', 'fashion'],
+  ['Art', 'painting'],
   ['Nature', 'nature'],
   ['Minimal', 'minimal'],
   ['Architecture', 'architecture'],
@@ -257,55 +378,211 @@ const CHIPS = [
   ['Travel', 'travel'],
   ['Food', 'food']
 ];
+const IDEAS = ['phone wallpaper', 'minimal aesthetic', 'streetwear outfit', 'sunset sky', 'luxury interior', 'gold abstract', 'mountain lake', 'vintage poster'];
 
-const state = { q: '', orient: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null };
-function resetSources(){ state.src = { pixabay: { page: 1, count: 0, done: false }, commons: { offset: 0, done: false } }; }
+const state = { q: '', orient: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null, board: 'all' };
+function resetSources(){
+  state.src = {
+    pixabay: { page: 1, count: 0, done: false },
+    commons: { offset: 0, done: false },
+    art: { page: 1, done: false }
+  };
+}
 resetSources();
 const allDone = () => Object.values(state.src).every(s => s.done);
+const comm = { items: [], cursor: null, done: false, loading: false };
 const byId = new Map();
 let current = null;
 
-/* ---------- accounts ---------- */
+/* ---------- accounts + data mode ---------- */
 const authOn = !!(window.MUSE_FIREBASE && window.MUSE_FIREBASE.apiKey);
 let uid = 'guest', me = null, booted = false, authReady = false;
+let dbMode = 'local', firstSnap = true, syncWarned = false;
+let saves = [], savesMap = new Map(), boards = [];
 
 /* ---------- helpers ---------- */
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+const CLOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.200 1.800L12 17l-1.800-5.200L5 10l5.200-1.800z"/></svg>';
 
 let toastTimer;
 function toast(msg){
   const t = $('#toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-/* ---------- favorites (kept on this phone, per account) ---------- */
-const favKey = () => 'muse:favs:' + uid;
-function loadFavs(){ try { return JSON.parse(localStorage.getItem(favKey()) || '[]'); } catch { return []; } }
-function saveFavs(l){ try { localStorage.setItem(favKey(), JSON.stringify(l)); } catch {} }
-function isFav(id){ return loadFavs().some(f => f.id === id); }
+/* ---------- saved pictures + boards ---------- */
+function persistLocal(){
+  try {
+    localStorage.setItem('muse:favs:' + uid, JSON.stringify(saves.map(s => s.postId ? Object.assign({}, s, { thumb: '', large: '' }) : s)));
+    localStorage.setItem('muse:boards:' + uid, JSON.stringify(boards));
+  } catch {}
+}
+function loadLocal(){
+  try { saves = JSON.parse(localStorage.getItem('muse:favs:' + uid) || '[]'); } catch { saves = []; }
+  try { boards = JSON.parse(localStorage.getItem('muse:boards:' + uid) || '[]'); } catch { boards = []; }
+  saves.forEach(s => { if (!s.boards) s.boards = []; });
+  savesMap = new Map(saves.map(s => [s.id, s]));
+}
+const isFav = id => savesMap.has(id);
+const savedList = () => saves.filter(s => state.board === 'all' || (s.boards || []).includes(state.board));
 
-function toggleFav(item){
-  const list = loadFavs();
-  const i = list.findIndex(f => f.id === item.id);
-  if (i >= 0) { list.splice(i, 1); toast('Removed from saved'); }
-  else { list.unshift(item); toast('Saved'); }
-  saveFavs(list);
-  syncHearts(item.id, i < 0);
+function setSaves(arr){
+  saves = arr; savesMap = new Map(arr.map(s => [s.id, s]));
+  persistLocal(); afterSavesChange();
+}
+function setBoards(arr){
+  boards = arr; persistLocal();
+  if (state.board !== 'all' && !boards.some(b => b.id === state.board)) state.board = 'all';
+  if (state.view === 'saved') { renderBoardChips(); refreshSavedView(); }
+  if (!$('#boardSheet').hidden) renderBoardList();
 }
 
-function syncHearts(id, saved){
-  grid.querySelectorAll('.card[data-id="' + id + '"]').forEach(card => {
-    const h = card.querySelector('.heart');
-    h.setAttribute('aria-pressed', saved);
-    h.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save');
-    if (state.view === 'saved' && !saved) card.remove();
+function syncAllHearts(){
+  grid.querySelectorAll('.card').forEach(card => {
+    const h = card.querySelector('.heart'), s = isFav(card.dataset.id);
+    h.setAttribute('aria-pressed', s);
+    h.setAttribute('aria-label', s ? 'Remove from saved' : 'Save');
   });
-  if (state.view === 'saved' && !loadFavs().length) setStatus('empty', 'Nothing saved yet. Tap the heart on any picture to keep it here.');
-  if (current && current.id === id) updateSaveBtn();
+  if (current) updateSaveBtn();
 }
+function emptySavedMsg(){
+  return state.board === 'all' ? 'Nothing saved yet. Tap the heart on any picture to keep it here.' : 'This board is empty. Open a picture and tap Boards to add it.';
+}
+function refreshSavedView(){
+  if (state.view !== 'saved') return;
+  const want = savedList().map(s => s.id);
+  const shown = [...grid.querySelectorAll('.card')].map(c => c.dataset.id);
+  if (want.every(id => shown.includes(id))) {
+    grid.querySelectorAll('.card').forEach(c => { if (!want.includes(c.dataset.id)) c.remove(); });
+  } else renderAll(savedList());
+  if (want.length) setStatus(''); else setStatus('empty', emptySavedMsg());
+}
+function afterSavesChange(){ syncAllHearts(); refreshSavedView(); if (!$('#boardSheet').hidden) renderBoardList(); }
+
+function cloudFail(){
+  if (dbMode === 'cloud') {
+    dbMode = 'local';
+    if (window.museDB) window.museDB.stop();
+    renderSync();
+    if (!syncWarned) { syncWarned = true; toast('Cloud sync is not switched on yet. Saved on this phone for now.'); }
+  }
+}
+
+function makeRec(item, boardIds){
+  const r = { id: item.id, w: item.w, h: item.h, thumb: item.thumb || '', large: item.large || '', page: item.page || '',
+    tags: item.tags || '', user: item.user || '', src: item.src || '', boards: boardIds, savedAt: Date.now() };
+  if (item.postId) { r.postId = item.postId; r.uid = item.uid || ''; r.thumb = ''; r.large = ''; }
+  return r;
+}
+async function saveItem(item, boardIds){
+  const rec = makeRec(item, boardIds || []);
+  setSaves([rec].concat(saves.filter(s => s.id !== rec.id)));
+  if (dbMode === 'cloud') { try { await window.museDB.addSave(uid, rec); } catch { cloudFail(); } }
+}
+async function removeItem(id){
+  setSaves(saves.filter(s => s.id !== id));
+  if (dbMode === 'cloud') { try { await window.museDB.removeSave(uid, id); } catch { cloudFail(); } }
+}
+async function toggleFav(item){
+  if (isFav(item.id)) { await removeItem(item.id); toast('Removed from saved'); }
+  else { await saveItem(item, []); toast('Saved'); }
+}
+async function setItemBoards(id, ids){
+  setSaves(saves.map(x => x.id === id ? Object.assign({}, x, { boards: ids }) : x));
+  if (dbMode === 'cloud') { try { await window.museDB.setSaveBoards(uid, id, ids); } catch { cloudFail(); } }
+}
+async function createBoard(name){
+  name = name.trim().slice(0, 40);
+  if (!name) return null;
+  if (boards.some(b => b.name.toLowerCase() === name.toLowerCase())) { toast('You already have that board'); return null; }
+  if (dbMode === 'cloud') {
+    try {
+      const id = await window.museDB.addBoard(uid, name);
+      if (!boards.some(b => b.id === id)) setBoards(boards.concat([{ id, name }]));
+      return id;
+    } catch { cloudFail(); }
+  }
+  const id = 'b' + Date.now().toString(36);
+  setBoards(boards.concat([{ id, name }]));
+  return id;
+}
+async function deleteBoard(id){
+  const affected = saves.filter(s => (s.boards || []).includes(id)).map(s => s.id);
+  setSaves(saves.map(s => (s.boards || []).includes(id) ? Object.assign({}, s, { boards: s.boards.filter(b => b !== id) }) : s));
+  setBoards(boards.filter(b => b.id !== id));
+  if (dbMode === 'cloud') { try { await window.museDB.deleteBoard(uid, id, affected); } catch { cloudFail(); } }
+}
+
+/* ---------- boards UI ---------- */
+function renderBoardChips(){
+  const wrap = $('#boardChips'); wrap.innerHTML = '';
+  const mk = (label, id, cls) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (cls ? ' ' + cls : ''); b.textContent = label; b.dataset.board = id;
+    if (!cls) b.setAttribute('aria-pressed', state.board === id);
+    wrap.appendChild(b);
+  };
+  mk('All', 'all');
+  boards.forEach(b => mk(b.name, b.id));
+  mk('+ New board', '__new', 'add');
+  $('#boardDelete').hidden = state.board === 'all';
+}
+$('#boardChips').addEventListener('click', async e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  if (b.dataset.board === '__new') {
+    const name = prompt('Name your board');
+    if (name) { const id = await createBoard(name); if (id) { state.board = id; setView('saved'); } }
+    return;
+  }
+  state.board = b.dataset.board; setView('saved');
+});
+$('#boardDelete').addEventListener('click', async () => {
+  const b = boards.find(x => x.id === state.board); if (!b) return;
+  if (confirm('Delete the board "' + b.name + '"? The pictures stay in Saved.')) { await deleteBoard(b.id); toast('Board deleted'); }
+});
+
+let sheetItem = null;
+function openBoardSheet(item){
+  sheetItem = item; renderBoardList();
+  $('#boardSheet').hidden = false;
+}
+function renderBoardList(){
+  const list = $('#boardList'); list.innerHTML = '';
+  if (!boards.length) { list.innerHTML = '<p class="sheet-note">You have no boards yet. Create your first one below.</p>'; return; }
+  const s = sheetItem && savesMap.get(sheetItem.id);
+  boards.forEach(b => {
+    const on = !!(s && (s.boards || []).includes(b.id));
+    const r = document.createElement('button');
+    r.className = 'board-row'; r.dataset.id = b.id; r.setAttribute('aria-pressed', on);
+    r.innerHTML = '<span>' + esc(b.name) + '</span><span class="tick" aria-hidden="true">&#10003;</span>';
+    list.appendChild(r);
+  });
+}
+async function toggleBoard(item, boardId){
+  const b = boards.find(x => x.id === boardId);
+  const s = savesMap.get(item.id);
+  if (!s) { await saveItem(item, [boardId]); toast('Added to ' + (b ? b.name : 'board')); }
+  else {
+    const has = (s.boards || []).includes(boardId);
+    await setItemBoards(item.id, has ? s.boards.filter(x => x !== boardId) : (s.boards || []).concat([boardId]));
+    toast((has ? 'Removed from ' : 'Added to ') + (b ? b.name : 'board'));
+  }
+}
+$('#boardList').addEventListener('click', e => {
+  const r = e.target.closest('.board-row'); if (r && sheetItem) toggleBoard(sheetItem, r.dataset.id);
+});
+$('#boardNew').addEventListener('submit', async e => {
+  e.preventDefault();
+  const inp = $('#boardName'), name = inp.value;
+  const id = await createBoard(name);
+  if (id) { inp.value = ''; if (sheetItem) await toggleBoard(sheetItem, id); }
+});
+$('#boardClose').addEventListener('click', () => { $('#boardSheet').hidden = true; sheetItem = null; });
+$('#boardSheet').addEventListener('click', e => { if (e.target.id === 'boardSheet') { $('#boardSheet').hidden = true; sheetItem = null; } });
 
 /* ---------- masonry grid ---------- */
 let cols = [], heights = [];
@@ -319,13 +596,25 @@ function buildCols(){
   }
 }
 
+function ensureImage(item){
+  if (item.large || !item.postId || !window.museDB) return Promise.resolve(item);
+  return window.museDB.getPost(item.postId).then(p => {
+    if (p) { item.thumb = item.thumb || p.img; item.large = p.img; }
+    return item;
+  }).catch(() => item);
+}
+
 function cardEl(item){
   const saved = isFav(item.id);
   const el = document.createElement('article');
   el.className = 'card'; el.dataset.id = item.id;
   el.innerHTML =
-    '<img src="' + esc(item.thumb) + '" alt="' + esc(item.tags) + '" width="' + item.w + '" height="' + item.h + '" loading="lazy" decoding="async">' +
+    '<img ' + (item.thumb ? 'src="' + esc(item.thumb) + '" ' : '') + 'alt="' + esc(item.tags) + '" width="' + item.w + '" height="' + item.h + '" loading="lazy" decoding="async">' +
     '<button class="heart" aria-pressed="' + saved + '" aria-label="' + (saved ? 'Remove from saved' : 'Save') + '">' + HEART + '</button>';
+  if (!item.thumb && item.postId) {
+    const img = el.querySelector('img');
+    ensureImage(item).then(it => { if (it.thumb) img.src = it.thumb; });
+  }
   return el;
 }
 
@@ -337,12 +626,12 @@ function place(item){
 }
 
 function renderAll(list){ buildCols(); list.forEach(place); }
-const currentList = () => state.view === 'saved' ? loadFavs() : state.view === 'explore' ? state.items : [];
+const currentList = () => state.view === 'saved' ? savedList() : state.view === 'explore' ? state.items : state.view === 'community' ? comm.items : [];
 
 grid.addEventListener('click', e => {
   const card = e.target.closest('.card'); if (!card) return;
   const item = byId.get(card.dataset.id); if (!item) return;
-  if (e.target.closest('.heart')) toggleFav(item); else openViewer(item);
+  if (e.target.closest('.heart')) toggleFav(savesMap.get(item.id) || item); else openViewer(item);
 });
 
 let rz;
@@ -425,6 +714,42 @@ async function fetchCommons(my){
   return out;
 }
 
+async function fetchArt(my){
+  const s = state.src.art;
+  if (!state.q) { s.done = true; return []; }
+  const u = new URL(ARTIC_URL), p = u.searchParams;
+  p.set('q', state.q);
+  p.set('query[term][is_public_domain]', 'true');
+  p.set('limit', '24'); p.set('page', s.page);
+  p.set('fields', 'id,title,image_id,thumbnail,artist_title');
+
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) throw new Error('Pictures could not be loaded (error ' + r.status + ').');
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const list = data.data || [], pg = data.pagination || {};
+  s.page++;
+  if (!list.length || s.page > (pg.total_pages || 1)) s.done = true;
+
+  const out = [];
+  list.forEach(a => {
+    if (!a.image_id || !a.thumbnail || !a.thumbnail.width || !a.thumbnail.height) return;
+    const w = a.thumbnail.width, h = a.thumbnail.height;
+    if (state.orient === 'vertical' && h <= w) return;
+    if (state.orient === 'horizontal' && w <= h) return;
+    out.push({
+      id: 'a' + a.id, w: w, h: h,
+      thumb: 'https://www.artic.edu/iiif/2/' + a.image_id + '/full/600,/0/default.jpg',
+      large: 'https://www.artic.edu/iiif/2/' + a.image_id + '/full/843,/0/default.jpg',
+      page: 'https://www.artic.edu/artworks/' + a.id,
+      tags: a.title + (a.artist_title ? ' by ' + a.artist_title : ''),
+      user: 'Art Institute of Chicago', src: 'Art Institute of Chicago'
+    });
+  });
+  return out;
+}
+
 function interleave(lists){
   const out = [], max = Math.max(0, ...lists.map(l => l.length));
   for (let i = 0; i < max; i++) lists.forEach(l => { if (l[i]) out.push(l[i]); });
@@ -432,6 +757,7 @@ function interleave(lists){
 }
 
 async function loadMore(){
+  if (state.view === 'community') return loadCommunity();
   if (state.view !== 'explore' || state.loading || allDone()) return;
   state.loading = true; setStatus('loading');
   const my = state.reqId;
@@ -439,6 +765,7 @@ async function loadMore(){
     const jobs = [];
     if (!state.src.pixabay.done) jobs.push(fetchPixabay(my));
     if (!state.src.commons.done) jobs.push(fetchCommons(my));
+    if (!state.src.art.done) jobs.push(fetchArt(my));
     const results = await Promise.allSettled(jobs);
     if (my !== state.reqId) return;
 
@@ -474,6 +801,124 @@ function startSearch(){
   buildCols(); scrollTo(0, 0); updateChips(); loadMore();
 }
 
+/* ---------- community feed ---------- */
+function postToItem(p){
+  return { id: 'u' + p.id, postId: p.id, w: p.w, h: p.h, thumb: p.img, large: p.img, page: '',
+    tags: p.title || 'Untitled', user: p.author || 'Member', uid: p.uid, src: 'Community' };
+}
+function cloudReady(){ return dbMode === 'cloud' && !!window.museDB; }
+
+async function loadCommunity(){
+  if (state.view !== 'community' || comm.loading || comm.done) return;
+  if (!cloudReady()) { setStatus('empty', 'The community needs cloud sync, which is not switched on yet.'); return; }
+  comm.loading = true; setStatus('loading');
+  const my = state.reqId;
+  try {
+    const res = await window.museDB.loadPosts(comm.cursor);
+    if (my !== state.reqId) return;
+    if (res.docs.length) comm.cursor = res.docs[res.docs.length - 1];
+    if (res.docs.length < 12) comm.done = true;
+    res.items.forEach(p => {
+      const it = postToItem(p);
+      if (comm.items.some(x => x.id === it.id)) return;
+      comm.items.push(it); place(it);
+    });
+    if (!comm.items.length) setStatus('empty', 'No posts yet. Be the first to post a picture.');
+    else if (comm.done) setStatus('end', 'You are all caught up.');
+    else setStatus('');
+  } catch (err) {
+    if (my !== state.reqId) return;
+    setStatus('error', 'The community feed could not be loaded. Check your connection and try again.');
+  } finally {
+    if (my === state.reqId) {
+      comm.loading = false;
+      if (!comm.done && state.view === 'community' && !statusEl.querySelector('.retry') && sentinel.getBoundingClientRect().top < innerHeight + 600) loadCommunity();
+    }
+  }
+}
+
+/* post sheet */
+let postData = null;
+function resetPostSheet(){
+  postData = null; $('#postFile').value = ''; $('#postTitle').value = ''; $('#postMsg').textContent = '';
+  $('#postPreview').hidden = true; $('#postGo').disabled = true;
+}
+$('#postBtn').addEventListener('click', () => {
+  if (!cloudReady() || !me) { toast('Posting needs cloud sync, which is not switched on yet.'); return; }
+  resetPostSheet(); $('#postSheet').hidden = false;
+});
+const closePost = () => { $('#postSheet').hidden = true; };
+$('#postClose').addEventListener('click', closePost);
+$('#postSheet').addEventListener('click', e => { if (e.target.id === 'postSheet') closePost(); });
+
+async function compressImage(file){
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 1000 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+  for (const q of [0.78, 0.65, 0.52, 0.4]) {
+    const url = c.toDataURL('image/jpeg', q);
+    if (url.length < 450000) return { img: url, w: w, h: h };
+  }
+  throw new Error('too-big');
+}
+$('#postFile').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const msg = $('#postMsg'); msg.textContent = ''; $('#postGo').disabled = true;
+  try {
+    postData = await compressImage(f);
+    const pv = $('#postPreview'); pv.src = postData.img; pv.hidden = false; $('#postGo').disabled = false;
+  } catch (err) {
+    postData = null;
+    msg.textContent = err.message === 'too-big' ? 'That picture is too detailed. Try a different one.' : 'That picture format is not supported. Use a JPG or PNG.';
+  }
+});
+$('#postGo').addEventListener('click', async () => {
+  if (!postData || !me) return;
+  const btn = $('#postGo'), msg = $('#postMsg'); btn.disabled = true; msg.textContent = '';
+  try {
+    await window.museDB.createPost({
+      uid: me.uid, author: me.name || (me.email ? me.email.split('@')[0] : 'Member'),
+      title: $('#postTitle').value.trim().slice(0, 80), img: postData.img, w: postData.w, h: postData.h, createdAt: Date.now()
+    });
+    closePost(); toast('Posted');
+    if (state.view === 'community') setView('community');
+  } catch (err) {
+    msg.textContent = 'Could not post. Check your connection and try again.'; btn.disabled = false;
+  }
+});
+
+/* ---------- search history + suggestions ---------- */
+const suggest = $('#suggest');
+const histKey = () => 'muse:hist:' + uid;
+function loadHist(){ try { return JSON.parse(localStorage.getItem(histKey()) || '[]'); } catch { return []; } }
+function addHist(q){
+  if (!q) return;
+  const l = loadHist().filter(x => x.toLowerCase() !== q.toLowerCase());
+  l.unshift(q);
+  try { localStorage.setItem(histKey(), JSON.stringify(l.slice(0, 8))); } catch {}
+}
+function renderSuggest(){
+  const val = input.value.trim().toLowerCase();
+  const hist = loadHist().filter(h => !val || h.toLowerCase().includes(val)).slice(0, 6);
+  const ideas = val ? [] : IDEAS.filter(i => !hist.includes(i)).slice(0, 6);
+  let html = '';
+  if (hist.length) html += '<div class="sg-head"><span>Recent</span><button type="button" data-clear="1">Clear</button></div>' +
+    hist.map(h => '<button type="button" class="sg-item" data-q="' + esc(h) + '">' + CLOCK + '<span>' + esc(h) + '</span></button>').join('');
+  if (ideas.length) html += '<div class="sg-head"><span>Ideas to try</span></div>' +
+    ideas.map(h => '<button type="button" class="sg-item" data-q="' + esc(h) + '">' + SPARK + '<span>' + esc(h) + '</span></button>').join('');
+  suggest.innerHTML = html; suggest.hidden = !html;
+}
+input.addEventListener('focus', renderSuggest);
+input.addEventListener('input', renderSuggest);
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.search')) suggest.hidden = true; });
+suggest.addEventListener('click', e => {
+  if (e.target.closest('[data-clear]')) { try { localStorage.removeItem(histKey()); } catch {} renderSuggest(); return; }
+  const b = e.target.closest('.sg-item'); if (!b) return;
+  state.q = b.dataset.q; input.value = state.q; suggest.hidden = true; addHist(state.q); input.blur(); startSearch();
+});
+
 /* ---------- controls ---------- */
 const chipsEl = $('#chips');
 CHIPS.forEach(([label, q, o]) => {
@@ -500,36 +945,39 @@ $('#shape').addEventListener('click', e => {
 
 $('#searchForm').addEventListener('submit', e => {
   e.preventDefault();
-  state.q = input.value.trim();
-  input.blur(); startSearch();
+  state.q = input.value.trim(); addHist(state.q);
+  suggest.hidden = true; input.blur(); startSearch();
 });
 
 function setView(v, silent){
   state.view = v;
   document.body.classList.toggle('saved', v === 'saved');
   document.body.classList.toggle('account', v === 'account');
-  $('#tabExplore').setAttribute('aria-current', v === 'explore' ? 'page' : 'false');
-  $('#tabSaved').setAttribute('aria-current', v === 'saved' ? 'page' : 'false');
-  $('#tabAccount').setAttribute('aria-current', v === 'account' ? 'page' : 'false');
+  document.body.classList.toggle('community', v === 'community');
+  [['Explore', 'explore'], ['Community', 'community'], ['Saved', 'saved'], ['Account', 'account']].forEach(([n, k]) => {
+    $('#tab' + n).setAttribute('aria-current', v === k ? 'page' : 'false');
+  });
   if (silent) return;
   scrollTo(0, 0);
+  state.reqId++; state.loading = false; comm.loading = false;
   if (v === 'account') {
-    state.reqId++; state.loading = false;
     grid.innerHTML = ''; cols = []; heights = [];
     setStatus(''); renderAccount();
   } else if (v === 'saved') {
-    state.reqId++; state.loading = false;
-    const favs = loadFavs();
-    renderAll(favs);
-    setStatus(favs.length ? '' : 'empty', 'Nothing saved yet. Tap the heart on any picture to keep it here.');
+    renderBoardChips();
+    renderAll(savedList());
+    setStatus(savedList().length ? '' : 'empty', emptySavedMsg());
+  } else if (v === 'community') {
+    comm.items = []; comm.cursor = null; comm.done = false;
+    buildCols(); loadCommunity();
   } else {
-    state.reqId++; state.loading = false;
     renderAll(state.items);
     if (!state.items.length) { resetSources(); loadMore(); }
     else setStatus(allDone() ? 'end' : '', 'That is everything for this search.');
   }
 }
 $('#tabExplore').addEventListener('click', () => { if (state.view !== 'explore') setView('explore'); else scrollTo({ top: 0, behavior: 'smooth' }); });
+$('#tabCommunity').addEventListener('click', () => setView('community'));
 $('#tabSaved').addEventListener('click', () => { if (state.view !== 'saved') setView('saved'); });
 $('#tabAccount').addEventListener('click', () => { if (state.view !== 'account') setView('account'); });
 
@@ -541,15 +989,26 @@ function updateSaveBtn(){
   b.textContent = s ? 'Saved' : 'Save';
 }
 
+function sourceLink(item){
+  if (item.src === 'Community') return 'Posted by ' + esc(item.user);
+  if (item.src === 'Pixabay') return '<a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>';
+  return '<a href="' + esc(item.page) + '" target="_blank" rel="noopener">View on ' + esc(item.src) + '</a>';
+}
+
 function openViewer(item){
   current = item;
-  vImg.src = item.thumb; vImg.alt = item.tags;
-  const big = new Image();
-  big.onload = () => { if (current === item) vImg.src = item.large; };
-  big.src = item.large;
-  $('#vCap').innerHTML = item.src === 'Pixabay'
-    ? esc(item.tags) + ' &middot; <a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>'
-    : esc(item.tags) + ' &middot; <a href="' + esc(item.page) + '" target="_blank" rel="noopener">View on Wikimedia Commons</a>';
+  vImg.src = item.thumb || ''; vImg.alt = item.tags;
+  if (item.postId) {
+    ensureImage(item).then(it => { if (current === item && it.large) vImg.src = it.large; });
+  } else {
+    const big = new Image();
+    big.onload = () => { if (current === item) vImg.src = item.large; };
+    big.src = item.large;
+  }
+  $('#vCap').innerHTML = esc(item.tags) + ' &middot; ' + sourceLink(item);
+  const ex = $('#vExtra');
+  if (item.src === 'Community' && me) { ex.hidden = false; ex.textContent = item.uid === me.uid ? 'Delete my post' : 'Report this picture'; }
+  else ex.hidden = true;
   updateSaveBtn();
   viewer.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -567,21 +1026,30 @@ $('#vClose').addEventListener('click', () => {
 addEventListener('popstate', () => { if (!viewer.hidden) closeViewer(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !viewer.hidden) $('#vClose').click(); });
 
-$('#vSave').addEventListener('click', () => { if (current) toggleFav(current); });
+$('#vSave').addEventListener('click', () => { if (current) toggleFav(savesMap.get(current.id) || current); });
+$('#vBoard').addEventListener('click', () => { if (current) openBoardSheet(savesMap.get(current.id) || current); });
+
+async function getBlob(item){
+  await ensureImage(item);
+  const r = await fetch(item.large, { mode: 'cors' });
+  if (!r.ok) throw 0;
+  return r.blob();
+}
+function saveBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
 
 $('#vDl').addEventListener('click', async () => {
   if (!current) return;
   const item = current;
   try {
-    const r = await fetch(item.large, { mode: 'cors' });
-    if (!r.ok) throw 0;
-    const blob = await r.blob();
+    const blob = await getBlob(item);
     const ext = ((blob.type || 'image/jpeg').split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'i-images-' + item.id + '.' + ext;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    saveBlob(blob, 'i-images-' + item.id + '.' + ext);
     toast('Downloaded');
   } catch {
     window.open(item.large, '_blank');
@@ -589,13 +1057,54 @@ $('#vDl').addEventListener('click', async () => {
   }
 });
 
+$('#vWall').addEventListener('click', async () => {
+  if (!current) return;
+  const item = current;
+  toast('Preparing your wallpaper');
+  try {
+    const bmp = await createImageBitmap(await getBlob(item));
+    const dpr = window.devicePixelRatio || 1;
+    const W = Math.round(screen.width * dpr), H = Math.round(screen.height * dpr);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const scale = Math.max(W / bmp.width, H / bmp.height);
+    const dw = bmp.width * scale, dh = bmp.height * scale;
+    c.getContext('2d').drawImage(bmp, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(), 'image/jpeg', 0.92));
+    saveBlob(blob, 'i-images-wallpaper-' + item.id + '.jpg');
+    toast('Wallpaper downloaded. Open it in Gallery and choose Set as wallpaper.');
+  } catch {
+    window.open(item.large, '_blank');
+    toast('Picture opened. Download it, then set it as wallpaper from Gallery.');
+  }
+});
+
 $('#vShare').addEventListener('click', async () => {
   if (!current) return;
-  const data = { title: 'I-Images', text: current.tags, url: current.page };
+  const url = current.page || location.href;
+  const data = { title: 'I-Images', text: current.tags, url: url };
   try {
     if (navigator.share) await navigator.share(data);
-    else { await navigator.clipboard.writeText(current.page); toast('Link copied'); }
+    else { await navigator.clipboard.writeText(url); toast('Link copied'); }
   } catch {}
+});
+
+$('#vExtra').addEventListener('click', async () => {
+  if (!current || !current.postId || !me || !window.museDB) return;
+  const item = current;
+  if (item.uid === me.uid) {
+    if (!confirm('Delete this post for everyone?')) return;
+    try {
+      await window.museDB.deletePost(item.postId);
+      grid.querySelectorAll('.card[data-id="' + item.id + '"]').forEach(c => c.remove());
+      comm.items = comm.items.filter(x => x.id !== item.id);
+      toast('Post deleted'); $('#vClose').click();
+    } catch { toast('Could not delete. Try again.'); }
+  } else {
+    const reason = prompt('What is wrong with this picture? (optional)');
+    if (reason === null) return;
+    try { await window.museDB.report(item.postId, me.uid, reason.slice(0, 200)); toast('Reported. Thank you.'); }
+    catch { toast('Could not send the report. Try again.'); }
+  }
 });
 
 /* ---------- sign up / log in screen ---------- */
@@ -624,6 +1133,7 @@ function showAuthForm(msg){
 }
 function showAuth(){
   if (!viewer.hidden) closeViewer();
+  $('#boardSheet').hidden = true; $('#postSheet').hidden = true;
   authEl.hidden = false; document.body.style.overflow = 'hidden';
   if (authReady) showAuthForm();
   $('#authPass').value = '';
@@ -639,7 +1149,9 @@ function friendly(err){
   if (c === 'auth/missing-password') return 'Enter your password.';
   if (c === 'auth/too-many-requests') return 'Too many tries. Wait a few minutes and try again.';
   if (c === 'auth/network-request-failed') return 'No internet connection. Check it and try again.';
-  if (c === 'auth/operation-not-allowed') return 'Email sign-in is not switched on yet in the Firebase settings.';
+  if (c === 'auth/operation-not-allowed') return 'This sign-in method is not switched on yet in the Firebase settings.';
+  if (c === 'auth/popup-blocked') return 'Your browser blocked the sign-in window. Allow pop-ups and try again.';
+  if (c === 'auth/unauthorized-domain') return 'This website is not on the allowed list in Firebase. Add it under Authentication, Settings, Authorized domains.';
   return 'Something went wrong. Please try again.';
 }
 
@@ -655,6 +1167,16 @@ $('#authForm').addEventListener('submit', async e => {
   finally { btn.disabled = false; }
 });
 
+$('#googleBtn').addEventListener('click', async () => {
+  if (!window.museAuth) { authMsg('Still connecting. Check your internet and try again.'); return; }
+  authMsg('');
+  try { await window.museAuth.google(); }
+  catch (err) {
+    if (err && (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')) return;
+    authMsg(friendly(err));
+  }
+});
+
 $('#authForgot').addEventListener('click', async () => {
   const email = $('#authEmail').value.trim();
   if (!email) { authMsg('Type your email above, then tap Forgot password again.'); return; }
@@ -663,10 +1185,40 @@ $('#authForgot').addEventListener('click', async () => {
   catch (err) { authMsg(friendly(err)); }
 });
 
-function renderAccount(){
-  $('#acctName').textContent = (me && me.name) || 'Welcome';
-  $('#acctMail').textContent = (me && me.email) || '';
+/* ---------- account page ---------- */
+function renderSync(){
+  $('#acctSync').textContent = dbMode === 'cloud'
+    ? 'Your saved pictures and boards are synced to your account.'
+    : 'Your saved pictures are kept on this phone only. Cloud sync is not switched on yet.';
 }
+function renderAccount(){
+  const name = (me && me.name) || '';
+  $('#acctName').textContent = name || 'Welcome';
+  $('#acctMail').textContent = (me && me.email) || '';
+  $('#nameInput').value = name;
+  const av = $('#avatar');
+  if (me && me.photo) av.innerHTML = '<img src="' + esc(me.photo) + '" alt="" referrerpolicy="no-referrer">';
+  else av.textContent = ((name || (me && me.email) || '?').trim()[0] || '?').toUpperCase();
+  renderSync();
+  const t = document.documentElement.getAttribute('data-theme') || 'dark';
+  $('#themeDark').setAttribute('aria-pressed', t === 'dark');
+  $('#themeLight').setAttribute('aria-pressed', t === 'light');
+}
+$('#nameForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const n = $('#nameInput').value.trim();
+  if (!n || !window.museAuth) return;
+  try { await window.museAuth.updateName(n); toast('Name saved'); }
+  catch { toast('Could not save your name. Try again.'); }
+});
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('muse:theme', t); } catch {}
+  document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'light' ? '#FAF6E9' : '#0E0C08');
+  renderAccount();
+}
+$('#themeDark').addEventListener('click', () => applyTheme('dark'));
+$('#themeLight').addEventListener('click', () => applyTheme('light'));
 $('#logout').addEventListener('click', async () => {
   try { await window.museAuth.signOut(); } catch { toast('Could not log out. Try again.'); }
 });
@@ -674,16 +1226,39 @@ $('#logout').addEventListener('click', async () => {
 addEventListener('muse-auth', e => {
   authReady = true;
   const u = e.detail.user;
-  if (!u) { me = null; uid = 'guest'; showAuth(); return; }
+  if (!u) {
+    if (window.museDB) window.museDB.stop();
+    me = null; uid = 'guest'; saves = []; boards = []; savesMap = new Map(); showAuth(); return;
+  }
   const same = me && me.uid === u.uid;
-  me = u; uid = u.uid; renderAccount(); hideAuth();
-  if (same) return;
+  me = u; uid = u.uid;
+  if (same) { renderAccount(); return; }
+  loadLocal();
+  if (window.museDB) { dbMode = 'cloud'; firstSnap = true; window.museDB.listen(uid); } else dbMode = 'local';
+  renderAccount(); hideAuth();
   if (!booted) boot(); else startSearch();
 });
 addEventListener('muse-auth-error', () => {
   authReady = true; authEl.hidden = false;
   showAuthForm('The sign-in service could not load. Check your internet, then reload the app.');
 });
+addEventListener('muse-saves', e => {
+  if (dbMode !== 'cloud') return;
+  const items = e.detail.items.map(x => Object.assign({ boards: [] }, x));
+  if (e.detail.fromCache && !items.length) return;
+  if (firstSnap) {
+    firstSnap = false;
+    const flag = 'muse:migrated:' + uid;
+    if (!items.length && saves.length && !localStorage.getItem(flag)) {
+      try { localStorage.setItem(flag, '1'); } catch {}
+      saves.forEach(s => window.museDB.addSave(uid, s).catch(() => {}));
+      return;
+    }
+  }
+  setSaves(items);
+});
+addEventListener('muse-boards', e => { if (dbMode === 'cloud') setBoards(e.detail.items); });
+addEventListener('muse-db-error', () => cloudFail());
 
 /* ---------- install button + offline shell ---------- */
 let deferred;
@@ -704,11 +1279,11 @@ function boot(){
 
 setMode('in');
 if (authOn) {
-  $('#tabAccount').hidden = false;
+  $('#tabAccount').hidden = false; $('#tabCommunity').hidden = false;
   authEl.hidden = false; document.body.style.overflow = 'hidden';
   setTimeout(() => { if (!authReady) { authReady = true; showAuthForm('Still connecting. Check your internet connection.'); } }, 8000);
 } else {
-  boot();
+  loadLocal(); boot();
 }
 </script>
 <script type="module" src="auth.js"></script>
