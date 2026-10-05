@@ -144,16 +144,17 @@ body.account #grid,body.account #status{display:none}
 
 /* viewer */
 #viewer{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column;color:#fff}
-.v-top{padding:calc(10px + env(safe-area-inset-top)) 12px 6px;display:flex}
+.v-top{padding:calc(10px + env(safe-area-inset-top)) 12px 6px;display:flex;align-items:center;justify-content:space-between}
+#vCount{font-size:14px;color:rgba(255,255,255,.7);padding-right:6px}
 .v-close{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center}
 .v-close svg{width:22px;height:22px;stroke:#fff;stroke-width:2.2;stroke-linecap:round;fill:none}
-.v-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 10px}
-.v-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+.v-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 10px;touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}
+.v-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;touch-action:none;will-change:transform;-webkit-user-drag:none;user-select:none}
 .v-info{padding:10px 16px calc(14px + env(safe-area-inset-bottom))}
 #vCap{font-size:14px;color:rgba(255,255,255,.72);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #vCap a{text-decoration:underline}
 .v-actions{display:flex;gap:10px;margin-bottom:10px}
-.v-actions button{flex:1;height:46px;border-radius:23px;background:rgba(255,255,255,.14);font-weight:600;font-size:15px;color:#fff}
+.v-actions button{flex:1;height:46px;border-radius:23px;background:rgba(255,255,255,.14);font-weight:600;font-size:14px;color:#fff;padding:0 6px}
 .v-actions button.primary{background:var(--accent);color:var(--on-accent)}
 .v-actions button[aria-pressed="true"]{background:var(--accent-soft);color:var(--on-accent)}
 .v-extra{display:block;margin:2px auto 0;color:rgba(255,255,255,.7);font-size:14px;text-decoration:underline;padding:6px 10px}
@@ -201,11 +202,37 @@ body.account #grid,body.account #status{display:none}
 .auth-msg{min-height:22px;margin:12px 2px 4px;font-size:14px;color:var(--err)}
 .auth-msg.ok{color:var(--link)}
 .auth-link{color:var(--link);font-size:14px;padding:8px 2px;text-decoration:underline}
+#lock{position:fixed;inset:0;z-index:55;background:var(--bg);display:flex;justify-content:center;padding:calc(60px + env(safe-area-inset-top)) 22px calc(28px + env(safe-area-inset-bottom))}
+#lock .auth-card{margin:auto 0}
+
+.offline-bar{background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:600;text-align:center;padding:7px 12px;margin:-10px -14px 10px;padding-top:calc(7px + env(safe-area-inset-top))}
+#note{margin:4px 14px 2px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:14px}
+.mini-av{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px}
+.avatar-wrap{position:relative;flex:none}
+.avatar.big{width:88px;height:88px;font-size:38px}
+.cam{position:absolute;right:-4px;bottom:-4px;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;border:3px solid var(--card)}
+.cam svg{width:16px;height:16px;fill:none;stroke:var(--bg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acct-since{color:var(--muted);font-size:13px;margin-top:2px}
+.acct-bio{margin-top:14px;font-size:15px;white-space:pre-wrap;word-break:break-word}
+.stats{display:flex;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.stat{flex:1;text-align:center}
+.stat b{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:22px}
+.stat span{font-size:13px;color:var(--muted)}
+.field textarea{width:100%;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:12px 16px;font:inherit;font-size:16px;resize:none;appearance:none;-webkit-appearance:none}
+.field textarea:focus{border-color:var(--accent);outline:none}
+.edit-form .field input{background:var(--bg)}
+.row-btns{display:flex;gap:10px}
+.row-btns .acct-btn{flex:1;height:46px;font-size:14px}
+.about p{font-size:14px;color:var(--muted);margin-top:6px}
+.about b{color:var(--ink)}
+.text-btn{color:var(--link);font-size:14px;text-decoration:underline;padding:6px 2px}
+.avatar-actions{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 </style>
 </head>
 <body>
 
 <header class="top">
+  <div class="offline-bar" id="offlineBar" role="status" hidden>You are offline. Connect to the internet to search and see pictures.</div>
   <div class="brand-row">
     <span class="logo">I-Images</span>
     <button id="install" hidden>Install app</button>
@@ -221,8 +248,14 @@ body.account #grid,body.account #status{display:none}
     <button data-o="vertical" aria-pressed="false">Portrait</button>
     <button data-o="horizontal" aria-pressed="false">Landscape</button>
   </div>
+  <div class="shape explore-only" id="srcFilter" aria-label="Where pictures come from">
+    <button data-g="all" aria-pressed="true">All sources</button>
+    <button data-g="photos" aria-pressed="false">Photos</button>
+    <button data-g="art" aria-pressed="false">Art</button>
+    <button data-g="space" aria-pressed="false">Space</button>
+  </div>
   <div class="comm-only comm-bar">
-    <h1 class="page-title">Community</h1>
+    <h1 class="page-title" id="commTitle">Community</h1>
     <button class="post-btn" id="postBtn">Post a picture</button>
   </div>
   <h1 class="page-title saved-only">Saved</h1>
@@ -231,17 +264,41 @@ body.account #grid,body.account #status{display:none}
   <h1 class="page-title account-only">Account</h1>
 </header>
 
+<div id="note" hidden></div>
 <main>
   <section class="account-panel account-only">
     <div class="acct-card">
       <div class="acct-top">
-        <div class="avatar" id="avatar" aria-hidden="true"></div>
-        <div><p class="acct-name" id="acctName"></p><p class="acct-mail" id="acctMail"></p></div>
+        <div class="avatar-wrap">
+          <div class="avatar big" id="avatar" aria-hidden="true"></div>
+          <button class="cam" id="avatarBtn" type="button" aria-label="Change profile photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+          <input id="avatarFile" type="file" accept="image/*" hidden>
+        </div>
+        <div>
+          <p class="acct-name" id="acctName"></p>
+          <p class="acct-mail" id="acctMail"></p>
+          <p class="acct-since" id="acctSince"></p>
+        </div>
       </div>
-      <form class="inline-form" id="nameForm">
-        <input id="nameInput" type="text" maxlength="40" placeholder="Your name" aria-label="Your name" autocomplete="name">
-        <button type="submit">Save name</button>
+      <p class="acct-bio" id="acctBio"></p>
+      <div class="stats">
+        <div class="stat"><b id="statSaved">0</b><span>Saved</span></div>
+        <div class="stat"><b id="statBoards">0</b><span>Boards</span></div>
+        <div class="stat"><b id="statPosts">-</b><span>Posts</span></div>
+      </div>
+      <button class="text-btn" id="removePhoto" type="button" hidden>Remove profile photo</button>
+    </div>
+    <div class="acct-card">
+      <p class="acct-label">Edit profile</p>
+      <form class="edit-form" id="profileForm">
+        <label class="field"><span>Name</span><input id="nameInput" type="text" maxlength="40" autocomplete="name"></label>
+        <label class="field"><span>Bio</span><textarea id="bioInput" maxlength="120" rows="3" placeholder="Tell people a little about you"></textarea></label>
+        <button class="auth-btn" type="submit">Save profile</button>
       </form>
+    </div>
+    <div class="row-btns">
+      <button class="acct-btn" id="myPosts">My posts</button>
+      <button class="acct-btn" id="changePw">Change password</button>
     </div>
     <div class="acct-card">
       <p class="acct-label">Appearance</p>
@@ -249,6 +306,16 @@ body.account #grid,body.account #status{display:none}
         <button id="themeDark" aria-pressed="true">Dark</button>
         <button id="themeLight" aria-pressed="false">Light</button>
       </div>
+    </div>
+    <div class="acct-card" id="lockCard" hidden>
+      <p class="acct-label">Fingerprint lock</p>
+      <p class="acct-note" style="margin-bottom:12px">Ask for your fingerprint (or phone screen lock) each time you open I-Images on this phone.</p>
+      <button class="acct-btn" id="lockToggle">Turn on</button>
+    </div>
+    <div class="acct-card about">
+      <p class="acct-label">About I-Images</p>
+      <p><b>Version 1.2</b></p>
+      <p>Pictures come from Pixabay, Openverse, Wikimedia Commons, the Art Institute of Chicago, the Cleveland Museum of Art and NASA. Open a picture and tap its source link to see who made it and its license.</p>
     </div>
     <p class="acct-note" id="acctSync"></p>
     <button class="acct-btn" id="logout">Log out</button>
@@ -282,6 +349,7 @@ body.account #grid,body.account #status{display:none}
     <button class="v-close" id="vClose" aria-label="Close picture">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
     </button>
+    <span id="vCount" aria-live="polite"></span>
   </div>
   <div class="v-stage"><img id="vImg" alt=""></div>
   <div class="v-info">
@@ -294,6 +362,7 @@ body.account #grid,body.account #status{display:none}
     <div class="v-actions">
       <button id="vDl" class="primary">Download</button>
       <button id="vWall">Wallpaper</button>
+      <button id="vSimilar">More like this</button>
     </div>
     <button class="v-extra" id="vExtra" hidden></button>
   </div>
@@ -350,6 +419,16 @@ body.account #grid,body.account #status{display:none}
   </div>
 </div>
 
+<div id="lock" hidden>
+  <div class="auth-card" style="text-align:center">
+    <div class="auth-logo">I-Images</div>
+    <p class="auth-tag">Locked</p>
+    <button class="auth-btn" id="unlockBtn">Unlock with fingerprint</button>
+    <p class="auth-msg" id="lockMsg" role="alert"></p>
+    <button class="auth-link" id="lockOut">Log out instead</button>
+  </div>
+</div>
+
 <div id="toast" role="status"></div>
 
 <script>
@@ -380,12 +459,17 @@ const CHIPS = [
 ];
 const IDEAS = ['phone wallpaper', 'minimal aesthetic', 'streetwear outfit', 'sunset sky', 'luxury interior', 'gold abstract', 'mountain lake', 'vintage poster'];
 
-const state = { q: '', orient: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null, board: 'all' };
+const state = { q: '', eq: '', orient: 'all', srcFilter: 'all', loading: false, items: [], view: 'explore', reqId: 0, src: null, board: 'all', broadened: false, firstPage: true, note: '' };
+const GROUPS = { photos: ['pixabay', 'openverse', 'commons'], art: ['art', 'cleveland'], space: ['nasa'] };
 function resetSources(){
+  const inc = n => state.srcFilter === 'all' || (GROUPS[state.srcFilter] || []).indexOf(n) >= 0;
   state.src = {
-    pixabay: { page: 1, count: 0, done: false },
-    commons: { offset: 0, done: false },
-    art: { page: 1, done: false }
+    pixabay: { page: 1, count: 0, done: !inc('pixabay') },
+    openverse: { page: 1, done: !inc('openverse') },
+    commons: { offset: 0, done: !inc('commons') },
+    art: { page: 1, done: !inc('art') },
+    cleveland: { skip: 0, done: !inc('cleveland') },
+    nasa: { page: 1, done: !inc('nasa') }
   };
 }
 resetSources();
@@ -406,6 +490,7 @@ const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1
 const CLOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 const SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.200 1.800L12 17l-1.800-5.200L5 10l5.200-1.800z"/></svg>';
 
+const isOnline = () => navigator.onLine !== false;
 let toastTimer;
 function toast(msg){
   const t = $('#toast');
@@ -475,7 +560,7 @@ function cloudFail(){
 function makeRec(item, boardIds){
   const r = { id: item.id, w: item.w, h: item.h, thumb: item.thumb || '', large: item.large || '', page: item.page || '',
     tags: item.tags || '', user: item.user || '', src: item.src || '', boards: boardIds, savedAt: Date.now() };
-  if (item.postId) { r.postId = item.postId; r.uid = item.uid || ''; r.thumb = ''; r.large = ''; }
+  if (item.postId) { r.postId = item.postId; r.uid = item.uid || ''; r.thumb = ''; r.large = ''; r.authorPhoto = item.authorPhoto || ''; }
   return r;
 }
 async function saveItem(item, boardIds){
@@ -650,11 +735,30 @@ function setStatus(kind, msg){
 statusEl.addEventListener('click', e => { if (e.target.closest('.retry')) loadMore(); });
 
 /* ---------- picture sources ---------- */
+const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'your', 'you', 'are', 'was', 'pic', 'pics', 'picture', 'pictures', 'image', 'images', 'photo', 'photos', 'wallpaper', 'wallpapers', 'free', 'over', 'into', 'under', 'near', 'about', 'through', 'between', 'after', 'before']);
+const words = q => (String(q || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) || []).filter(w => w.length >= 3 && !STOP.has(w));
+const stem = w => (w.length > 3 && w.endsWith('s')) ? w.slice(0, -1) : w;
+const plain = h => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ');
+const qNow = () => state.eq.slice(0, 100);
+
+// Keeps results that actually mention what was searched for.
+function relevant(text){
+  const tk = words(state.eq).map(stem);
+  if (!tk.length) return true;
+  const hay = String(text || '').toLowerCase();
+  return tk.filter(t => hay.indexOf(t) >= 0).length >= Math.ceil(tk.length * 0.6);
+}
+function shapeOk(w, h){
+  if (state.orient === 'vertical') return h > w;
+  if (state.orient === 'horizontal') return w > h;
+  return true;
+}
+
 async function fetchPixabay(my){
   const s = state.src.pixabay;
   const u = new URL(PIXABAY_URL), p = u.searchParams;
   p.set('key', API_KEY);
-  if (state.q) p.set('q', state.q.slice(0, 100));
+  if (state.eq) p.set('q', qNow());
   p.set('image_type', 'all');
   p.set('per_page', PER_PAGE);
   p.set('page', s.page);
@@ -677,15 +781,45 @@ async function fetchPixabay(my){
   }));
 }
 
+async function fetchOpenverse(my){
+  const s = state.src.openverse;
+  if (!state.eq) { s.done = true; return []; }
+  const u = new URL('https://api.openverse.org/v1/images/'), p = u.searchParams;
+  p.set('q', qNow()); p.set('page', s.page); p.set('page_size', '24');
+  if (state.orient === 'vertical') p.set('aspect_ratio', 'tall');
+  if (state.orient === 'horizontal') p.set('aspect_ratio', 'wide');
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) { s.done = true; return []; }
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const list = data.results || [];
+  s.page++;
+  if (!list.length || s.page > (data.page_count || 1)) s.done = true;
+  const out = [];
+  list.forEach(it => {
+    if (!it.thumbnail || !it.url) return;
+    const w = Number(it.width) || 4, h = Number(it.height) || 3;
+    if (it.width && it.height && !shapeOk(w, h)) return;
+    if (!relevant((it.title || '') + ' ' + (it.tags || []).map(t => t.name).join(' '))) return;
+    out.push({
+      id: 'o' + it.id, w: w, h: h, thumb: it.thumbnail, large: String(it.url).replace(/^http:/, 'https:'),
+      page: it.foreign_landing_url || it.url, tags: it.title || 'Untitled', user: it.creator || 'Openverse', src: 'Openverse'
+    });
+  });
+  return out;
+}
+
 async function fetchCommons(my){
   const s = state.src.commons;
-  if (!state.q) { s.done = true; return []; }
+  if (!state.eq) { s.done = true; return []; }
   const u = new URL(COMMONS_URL), p = u.searchParams;
   p.set('action', 'query'); p.set('format', 'json'); p.set('origin', '*');
   p.set('generator', 'search'); p.set('gsrnamespace', '6');
-  p.set('gsrsearch', state.q + ' filetype:bitmap');
+  p.set('gsrsearch', qNow() + ' filetype:bitmap');
   p.set('gsrlimit', '30'); p.set('gsroffset', s.offset);
-  p.set('prop', 'imageinfo'); p.set('iiprop', 'url|size|mime'); p.set('iiurlwidth', '640');
+  p.set('prop', 'imageinfo'); p.set('iiprop', 'url|size|mime|extmetadata'); p.set('iiurlwidth', '640');
+  p.set('iiextmetadatafilter', 'ImageDescription|Categories|ObjectName');
 
   const r = await fetch(u);
   if (my !== state.reqId) return [];
@@ -702,13 +836,16 @@ async function fetchCommons(my){
     const info = pg.imageinfo && pg.imageinfo[0];
     if (!info || !/^image\/(jpeg|png|webp)$/.test(info.mime) || !info.thumburl) return;
     if (info.width < 500 || !info.thumbwidth || !info.thumbheight) return;
-    if (state.orient === 'vertical' && info.height <= info.width) return;
-    if (state.orient === 'horizontal' && info.width <= info.height) return;
+    if (!shapeOk(info.width, info.height)) return;
+    const md = info.extmetadata || {};
+    const file = pg.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ');
+    const name = plain(md.ObjectName && md.ObjectName.value).trim() || file;
+    const hay = name + ' ' + file + ' ' + plain(md.ImageDescription && md.ImageDescription.value) + ' ' + String((md.Categories && md.Categories.value) || '').replace(/\|/g, ' ');
+    if (!relevant(hay)) return;
     const large = info.width >= 1280 ? info.thumburl.replace(/\/\d+px-([^\/]+)$/, '/1280px-$1') : info.url;
     out.push({
       id: 'c' + pg.pageid, w: info.thumbwidth, h: info.thumbheight, thumb: info.thumburl, large: large,
-      page: info.descriptionurl, tags: pg.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' '),
-      user: 'Wikimedia Commons', src: 'Wikimedia Commons'
+      page: info.descriptionurl, tags: name, user: 'Wikimedia Commons', src: 'Wikimedia Commons'
     });
   });
   return out;
@@ -716,16 +853,16 @@ async function fetchCommons(my){
 
 async function fetchArt(my){
   const s = state.src.art;
-  if (!state.q) { s.done = true; return []; }
+  if (!state.eq) { s.done = true; return []; }
   const u = new URL(ARTIC_URL), p = u.searchParams;
-  p.set('q', state.q);
+  p.set('q', qNow());
   p.set('query[term][is_public_domain]', 'true');
   p.set('limit', '24'); p.set('page', s.page);
   p.set('fields', 'id,title,image_id,thumbnail,artist_title');
 
   const r = await fetch(u);
   if (my !== state.reqId) return [];
-  if (!r.ok) throw new Error('Pictures could not be loaded (error ' + r.status + ').');
+  if (!r.ok) { s.done = true; return []; }
   const data = await r.json();
   if (my !== state.reqId) return [];
   const list = data.data || [], pg = data.pagination || {};
@@ -736,8 +873,8 @@ async function fetchArt(my){
   list.forEach(a => {
     if (!a.image_id || !a.thumbnail || !a.thumbnail.width || !a.thumbnail.height) return;
     const w = a.thumbnail.width, h = a.thumbnail.height;
-    if (state.orient === 'vertical' && h <= w) return;
-    if (state.orient === 'horizontal' && w <= h) return;
+    if (!shapeOk(w, h)) return;
+    if (!relevant(a.title + ' ' + (a.artist_title || ''))) return;
     out.push({
       id: 'a' + a.id, w: w, h: h,
       thumb: 'https://www.artic.edu/iiif/2/' + a.image_id + '/full/600,/0/default.jpg',
@@ -750,23 +887,84 @@ async function fetchArt(my){
   return out;
 }
 
+async function fetchCleveland(my){
+  const s = state.src.cleveland;
+  if (!state.eq) { s.done = true; return []; }
+  const u = new URL('https://openaccess-api.clevelandart.org/api/artworks/'), p = u.searchParams;
+  p.set('q', qNow()); p.set('has_image', '1'); p.set('limit', '24'); p.set('skip', s.skip);
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) { s.done = true; return []; }
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const list = data.data || [];
+  s.skip += 24;
+  if (!list.length || s.skip >= ((data.info && data.info.total) || 0)) s.done = true;
+  const out = [];
+  list.forEach(a => {
+    const img = a.images && a.images.web;
+    if (!img || !img.url) return;
+    const w = Number(img.width) || 4, h = Number(img.height) || 3;
+    if (img.width && img.height && !shapeOk(w, h)) return;
+    const who = (a.creators && a.creators[0] && a.creators[0].description) || '';
+    if (!relevant((a.title || '') + ' ' + who + ' ' + (a.type || '') + ' ' + (a.technique || ''))) return;
+    out.push({
+      id: 'k' + a.id, w: w, h: h, thumb: img.url, large: img.url, page: a.url || 'https://clevelandart.org',
+      tags: (a.title || 'Untitled') + (who ? ' by ' + who.split('\n')[0] : ''), user: 'Cleveland Museum of Art', src: 'Cleveland Museum of Art'
+    });
+  });
+  return out;
+}
+
+async function fetchNasa(my){
+  const s = state.src.nasa;
+  if (!state.eq || state.orient !== 'all') { s.done = true; return []; }
+  const u = new URL('https://images-api.nasa.gov/search'), p = u.searchParams;
+  p.set('q', qNow()); p.set('media_type', 'image'); p.set('page', s.page); p.set('page_size', '24');
+  const r = await fetch(u);
+  if (my !== state.reqId) return [];
+  if (!r.ok) { s.done = true; return []; }
+  const data = await r.json();
+  if (my !== state.reqId) return [];
+  const col = data.collection || {}, list = col.items || [];
+  s.page++;
+  if (!list.length || s.page * 24 >= ((col.metadata && col.metadata.total_hits) || 0)) s.done = true;
+  const out = [];
+  list.forEach(it => {
+    const d = it.data && it.data[0], link = it.links && it.links[0];
+    if (!d || !link || !link.href || !d.nasa_id) return;
+    if (!relevant((d.title || '') + ' ' + plain(d.description) + ' ' + (d.keywords || []).join(' '))) return;
+    const base = String(link.href).replace(/^http:/, 'https:');
+    out.push({
+      id: 'n' + d.nasa_id, w: 4, h: 3,
+      thumb: base.replace(/~(thumb|small|medium|large|orig)\./, '~small.'),
+      large: base.replace(/~(thumb|small|medium|large|orig)\./, '~medium.'),
+      page: 'https://images.nasa.gov/details/' + encodeURIComponent(d.nasa_id),
+      tags: d.title || 'NASA image', user: 'NASA', src: 'NASA'
+    });
+  });
+  return out;
+}
+
 function interleave(lists){
   const out = [], max = Math.max(0, ...lists.map(l => l.length));
   for (let i = 0; i < max; i++) lists.forEach(l => { if (l[i]) out.push(l[i]); });
   return out;
 }
 
+function setNote(){ const n = $('#note'); n.textContent = state.note; n.hidden = !state.note || state.view !== 'explore'; }
+
+const FETCHERS = { pixabay: fetchPixabay, openverse: fetchOpenverse, commons: fetchCommons, art: fetchArt, cleveland: fetchCleveland, nasa: fetchNasa };
+
 async function loadMore(){
   if (state.view === 'community') return loadCommunity();
   if (state.view !== 'explore' || state.loading || allDone()) return;
+  if (!isOnline() && !state.items.length) { setStatus('empty', 'You are offline. Connect to the internet to search for pictures.'); return; }
   state.loading = true; setStatus('loading');
   const my = state.reqId;
   try {
-    const jobs = [];
-    if (!state.src.pixabay.done) jobs.push(fetchPixabay(my));
-    if (!state.src.commons.done) jobs.push(fetchCommons(my));
-    if (!state.src.art.done) jobs.push(fetchArt(my));
-    const results = await Promise.allSettled(jobs);
+    const names = Object.keys(FETCHERS).filter(n => !state.src[n].done);
+    const results = await Promise.allSettled(names.map(n => FETCHERS[n](my).catch(e => { if (n !== 'pixabay') state.src[n].done = true; throw e; })));
     if (my !== state.reqId) return;
 
     const lists = []; let firstErr = null;
@@ -778,12 +976,23 @@ async function loadMore(){
       state.items.push(it); place(it);
     });
 
+    if (state.firstPage) {
+      state.firstPage = false;
+      const tk = words(state.q);
+      if (state.items.length < 6 && tk.length > 1 && !state.broadened) {
+        state.broadened = true;
+        state.eq = tk.slice().sort((a, b) => b.length - a.length)[0];
+        state.note = 'Few matches for "' + state.q + '", so here are pictures for "' + state.eq + '" too.';
+        resetSources(); setNote();
+      }
+    }
+
     if (!state.items.length && allDone()) setStatus('empty', 'No pictures found for "' + state.q + '". Try a different word.');
     else if (allDone()) setStatus('end', 'That is everything for this search.');
     else setStatus('');
   } catch (err) {
     if (my !== state.reqId) return;
-    const offline = !navigator.onLine || err instanceof TypeError;
+    const offline = !isOnline() || err instanceof TypeError;
     setStatus('error', offline ? 'No internet connection. Check your connection and try again.' : err.message);
   } finally {
     if (my === state.reqId) {
@@ -796,35 +1005,42 @@ async function loadMore(){
 new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '900px' }).observe(sentinel);
 
 function startSearch(){
-  state.reqId++; state.items = []; resetSources(); state.loading = false;
+  state.reqId++; state.items = []; state.eq = state.q; state.broadened = false; state.firstPage = true; state.note = '';
+  resetSources(); state.loading = false;
   if (state.view !== 'explore') setView('explore', true);
-  buildCols(); scrollTo(0, 0); updateChips(); loadMore();
+  setNote(); buildCols(); scrollTo(0, 0); updateChips(); loadMore();
+}
+function userSearch(){
+  if (!isOnline()) { toast('You are offline. Connect to the internet to search.'); return false; }
+  startSearch(); return true;
 }
 
 /* ---------- community feed ---------- */
+let commMine = false;
 function postToItem(p){
   return { id: 'u' + p.id, postId: p.id, w: p.w, h: p.h, thumb: p.img, large: p.img, page: '',
-    tags: p.title || 'Untitled', user: p.author || 'Member', uid: p.uid, src: 'Community' };
+    tags: p.title || 'Untitled', user: p.author || 'Member', uid: p.uid, authorPhoto: p.authorPhoto || '', src: 'Community' };
 }
 function cloudReady(){ return dbMode === 'cloud' && !!window.museDB; }
 
 async function loadCommunity(){
   if (state.view !== 'community' || comm.loading || comm.done) return;
+  if (!isOnline()) { setStatus('empty', 'You are offline. The community needs internet.'); return; }
   if (!cloudReady()) { setStatus('empty', 'The community needs cloud sync, which is not switched on yet.'); return; }
   comm.loading = true; setStatus('loading');
   const my = state.reqId;
   try {
-    const res = await window.museDB.loadPosts(comm.cursor);
+    const res = await window.museDB.loadPosts(comm.cursor, commMine ? uid : null);
     if (my !== state.reqId) return;
     if (res.docs.length) comm.cursor = res.docs[res.docs.length - 1];
-    if (res.docs.length < 12) comm.done = true;
+    if (commMine || res.docs.length < 12) comm.done = true;
     res.items.forEach(p => {
       const it = postToItem(p);
       if (comm.items.some(x => x.id === it.id)) return;
       comm.items.push(it); place(it);
     });
-    if (!comm.items.length) setStatus('empty', 'No posts yet. Be the first to post a picture.');
-    else if (comm.done) setStatus('end', 'You are all caught up.');
+    if (!comm.items.length) setStatus('empty', commMine ? 'You have not posted anything yet. Tap Post a picture to share one.' : 'No posts yet. Be the first to post a picture.');
+    else if (comm.done) setStatus('end', commMine ? 'That is all your posts.' : 'You are all caught up.');
     else setStatus('');
   } catch (err) {
     if (my !== state.reqId) return;
@@ -837,6 +1053,16 @@ async function loadCommunity(){
   }
 }
 
+/* image helpers */
+const loadImg = url => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+function toSquare(src, size, q){
+  const sw = src.width || src.naturalWidth, sh = src.height || src.naturalHeight, m = Math.min(sw, sh);
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  c.getContext('2d').drawImage(src, (sw - m) / 2, (sh - m) / 2, m, m, 0, 0, size, size);
+  return c.toDataURL('image/jpeg', q);
+}
+async function shrinkImage(dataUrl, size){ try { return toSquare(await loadImg(dataUrl), size, 0.7); } catch { return ''; } }
+
 /* post sheet */
 let postData = null;
 function resetPostSheet(){
@@ -844,6 +1070,7 @@ function resetPostSheet(){
   $('#postPreview').hidden = true; $('#postGo').disabled = true;
 }
 $('#postBtn').addEventListener('click', () => {
+  if (!isOnline()) { toast('You are offline. Posting needs internet.'); return; }
   if (!cloudReady() || !me) { toast('Posting needs cloud sync, which is not switched on yet.'); return; }
   resetPostSheet(); $('#postSheet').hidden = false;
 });
@@ -878,8 +1105,9 @@ $('#postGo').addEventListener('click', async () => {
   if (!postData || !me) return;
   const btn = $('#postGo'), msg = $('#postMsg'); btn.disabled = true; msg.textContent = '';
   try {
+    const authorPhoto = profile.photo ? await shrinkImage(profile.photo, 96) : '';
     await window.museDB.createPost({
-      uid: me.uid, author: me.name || (me.email ? me.email.split('@')[0] : 'Member'),
+      uid: me.uid, author: me.name || (me.email ? me.email.split('@')[0] : 'Member'), authorPhoto: authorPhoto,
       title: $('#postTitle').value.trim().slice(0, 80), img: postData.img, w: postData.w, h: postData.h, createdAt: Date.now()
     });
     closePost(); toast('Posted');
@@ -916,7 +1144,7 @@ document.addEventListener('pointerdown', e => { if (!e.target.closest('.search')
 suggest.addEventListener('click', e => {
   if (e.target.closest('[data-clear]')) { try { localStorage.removeItem(histKey()); } catch {} renderSuggest(); return; }
   const b = e.target.closest('.sg-item'); if (!b) return;
-  state.q = b.dataset.q; input.value = state.q; suggest.hidden = true; addHist(state.q); input.blur(); startSearch();
+  state.q = b.dataset.q; input.value = state.q; suggest.hidden = true; addHist(state.q); input.blur(); userSearch();
 });
 
 /* ---------- controls ---------- */
@@ -927,7 +1155,7 @@ CHIPS.forEach(([label, q, o]) => {
   b.addEventListener('click', () => {
     state.q = q; input.value = q;
     if (o) { state.orient = o; updateShape(); }
-    startSearch();
+    userSearch();
   });
   chipsEl.appendChild(b);
 });
@@ -940,13 +1168,22 @@ function updateShape(){
 }
 $('#shape').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  state.orient = b.dataset.o; updateShape(); startSearch();
+  state.orient = b.dataset.o; updateShape(); userSearch();
+});
+
+function updateSrcFilter(){
+  $('#srcFilter').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.g === state.srcFilter));
+}
+$('#srcFilter').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.srcFilter = b.dataset.g; updateSrcFilter(); userSearch();
 });
 
 $('#searchForm').addEventListener('submit', e => {
   e.preventDefault();
-  state.q = input.value.trim(); addHist(state.q);
-  suggest.hidden = true; input.blur(); startSearch();
+  state.q = input.value.trim();
+  suggest.hidden = true; input.blur();
+  if (userSearch()) addHist(state.q);
 });
 
 function setView(v, silent){
@@ -962,26 +1199,51 @@ function setView(v, silent){
   state.reqId++; state.loading = false; comm.loading = false;
   if (v === 'account') {
     grid.innerHTML = ''; cols = []; heights = [];
-    setStatus(''); renderAccount();
+    setStatus(''); renderAccount(); loadPostCount();
   } else if (v === 'saved') {
     renderBoardChips();
     renderAll(savedList());
     setStatus(savedList().length ? '' : 'empty', emptySavedMsg());
   } else if (v === 'community') {
+    $('#commTitle').textContent = commMine ? 'My posts' : 'Community';
     comm.items = []; comm.cursor = null; comm.done = false;
     buildCols(); loadCommunity();
   } else {
     renderAll(state.items);
     if (!state.items.length) { resetSources(); loadMore(); }
     else setStatus(allDone() ? 'end' : '', 'That is everything for this search.');
+    setNote();
   }
+  setNote();
 }
 $('#tabExplore').addEventListener('click', () => { if (state.view !== 'explore') setView('explore'); else scrollTo({ top: 0, behavior: 'smooth' }); });
-$('#tabCommunity').addEventListener('click', () => setView('community'));
+$('#tabCommunity').addEventListener('click', () => { commMine = false; setView('community'); });
 $('#tabSaved').addEventListener('click', () => { if (state.view !== 'saved') setView('saved'); });
 $('#tabAccount').addEventListener('click', () => { if (state.view !== 'account') setView('account'); });
 
 /* ---------- full-screen viewer ---------- */
+let vList = [], vIdx = 0;
+const vz = { s: 1, tx: 0, ty: 0 };
+const stage = $('.v-stage');
+
+function applyZ(anim){
+  vImg.style.transition = anim ? 'transform .2s ease' : 'none';
+  vImg.style.transform = 'translate(' + vz.tx + 'px,' + vz.ty + 'px) scale(' + vz.s + ')';
+}
+function resetZ(anim){ vz.s = 1; vz.tx = 0; vz.ty = 0; applyZ(!!anim); }
+function clampZ(){
+  const mx = Math.max(0, (vImg.offsetWidth * vz.s - stage.clientWidth) / 2);
+  const my = Math.max(0, (vImg.offsetHeight * vz.s - stage.clientHeight) / 2);
+  vz.tx = Math.min(mx, Math.max(-mx, vz.tx)); vz.ty = Math.min(my, Math.max(-my, vz.ty));
+}
+function stageCenter(){ const r = stage.getBoundingClientRect(); return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; }
+function zoomTo(ns, x, y){
+  const c = stageCenter(), px = x - c.cx, py = y - c.cy;
+  vz.tx = px - (px - vz.tx) * (ns / vz.s); vz.ty = py - (py - vz.ty) * (ns / vz.s); vz.s = ns;
+  if (ns <= 1.02) { vz.s = 1; vz.tx = 0; vz.ty = 0; } else clampZ();
+  applyZ(true);
+}
+
 function updateSaveBtn(){
   const s = current && isFav(current.id);
   const b = $('#vSave');
@@ -990,50 +1252,143 @@ function updateSaveBtn(){
 }
 
 function sourceLink(item){
-  if (item.src === 'Community') return 'Posted by ' + esc(item.user);
+  if (item.src === 'Community') {
+    return (item.authorPhoto ? '<img class="mini-av" src="' + esc(item.authorPhoto) + '" alt="">' : '') + 'Posted by ' + esc(item.user);
+  }
   if (item.src === 'Pixabay') return '<a href="' + esc(item.page) + '" target="_blank" rel="noopener">' + esc(item.user) + ' on Pixabay</a>';
   return '<a href="' + esc(item.page) + '" target="_blank" rel="noopener">View on ' + esc(item.src) + '</a>';
 }
 
-function openViewer(item){
-  current = item;
+function renderViewer(){
+  const item = vList[vIdx];
+  current = item; resetZ(false);
   vImg.src = item.thumb || ''; vImg.alt = item.tags;
+  try { vImg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180 }); } catch {}
   if (item.postId) {
     ensureImage(item).then(it => { if (current === item && it.large) vImg.src = it.large; });
-  } else {
+  } else if (item.large && item.large !== item.thumb) {
     const big = new Image();
     big.onload = () => { if (current === item) vImg.src = item.large; };
     big.src = item.large;
   }
+  $('#vCount').textContent = vList.length > 1 ? (vIdx + 1) + ' / ' + vList.length : '';
   $('#vCap').innerHTML = esc(item.tags) + ' &middot; ' + sourceLink(item);
   const ex = $('#vExtra');
   if (item.src === 'Community' && me) { ex.hidden = false; ex.textContent = item.uid === me.uid ? 'Delete my post' : 'Report this picture'; }
   else ex.hidden = true;
   updateSaveBtn();
+}
+
+function openViewer(item){
+  vList = currentList().slice(); vIdx = vList.findIndex(x => x.id === item.id);
+  if (vIdx < 0) { vList = [item]; vIdx = 0; }
   viewer.hidden = false;
   document.body.style.overflow = 'hidden';
   history.pushState({ muse: 1 }, '');
+  renderViewer();
   $('#vClose').focus();
 }
 function closeViewer(){
   viewer.hidden = true; current = null;
   document.body.style.overflow = '';
-  vImg.removeAttribute('src');
+  vImg.removeAttribute('src'); resetZ(false);
 }
-$('#vClose').addEventListener('click', () => {
-  if (history.state && history.state.muse) history.back(); else closeViewer();
-});
+function closeViewerNow(){ if (history.state && history.state.muse) history.back(); else closeViewer(); }
+$('#vClose').addEventListener('click', closeViewerNow);
 addEventListener('popstate', () => { if (!viewer.hidden) closeViewer(); });
-addEventListener('keydown', e => { if (e.key === 'Escape' && !viewer.hidden) $('#vClose').click(); });
+
+function navigate(d){
+  if (!current) return;
+  const fresh = currentList();
+  if (fresh.length && fresh.some(x => x.id === current.id)) { vList = fresh.slice(); vIdx = vList.findIndex(x => x.id === current.id); }
+  const i = vIdx + d;
+  if (i < 0) { toast('This is the first picture'); resetZ(true); return; }
+  if (i >= vList.length) {
+    if (state.view === 'explore' && !allDone() && isOnline()) { toast('Loading more pictures'); loadMore(); }
+    else toast('That is the last picture');
+    resetZ(true); return;
+  }
+  vIdx = i; renderViewer();
+}
+addEventListener('keydown', e => {
+  if (viewer.hidden) return;
+  if (e.key === 'Escape') closeViewerNow();
+  else if (e.key === 'ArrowRight') navigate(1);
+  else if (e.key === 'ArrowLeft') navigate(-1);
+});
+
+/* touch gestures: swipe, pinch to zoom, double tap, drag when zoomed */
+const ptrs = new Map();
+let g = null, lastTap = 0, lastTapX = 0, lastTapY = 0;
+stage.addEventListener('pointerdown', e => {
+  try { stage.setPointerCapture(e.pointerId); } catch {}
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 1) g = { mode: 'one', sx: e.clientX, sy: e.clientY, tx0: vz.tx, ty0: vz.ty, moved: false };
+  else if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()];
+    g = { mode: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: vz.s, tx0: vz.tx, ty0: vz.ty, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  }
+});
+stage.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!g) return;
+  if (g.mode === 'pinch' && ptrs.size >= 2) {
+    const [a, b] = [...ptrs.values()];
+    const ns = Math.min(5, Math.max(1, g.s0 * Math.hypot(a.x - b.x, a.y - b.y) / g.d0));
+    const c = stageCenter(), px = g.mx - c.cx, py = g.my - c.cy;
+    vz.tx = px - (px - g.tx0) * (ns / g.s0); vz.ty = py - (py - g.ty0) * (ns / g.s0); vz.s = ns;
+    clampZ(); applyZ(false);
+  } else if (g.mode === 'one') {
+    const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+    if (Math.abs(dx) + Math.abs(dy) > 8) g.moved = true;
+    if (vz.s > 1.02) { vz.tx = g.tx0 + dx; vz.ty = g.ty0 + dy; clampZ(); }
+    else { vz.tx = dx; vz.ty = Math.max(0, dy) * 0.6; }
+    applyZ(false);
+  }
+});
+function endPointer(e){
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (g && g.mode === 'pinch') {
+    if (ptrs.size === 1) {
+      const r = [...ptrs.values()][0];
+      g = { mode: 'one', sx: r.x, sy: r.y, tx0: vz.tx, ty0: vz.ty, moved: true };
+    } else g = null;
+    if (vz.s < 1.05) resetZ(true);
+    return;
+  }
+  if (g && g.mode === 'one') {
+    const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+    if (!g.moved) {
+      const now = Date.now();
+      if (now - lastTap < 300 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 40) { zoomTo(vz.s > 1.05 ? 1 : 2.5, e.clientX, e.clientY); lastTap = 0; }
+      else { lastTap = now; lastTapX = e.clientX; lastTapY = e.clientY; if (vz.s <= 1.02) resetZ(true); }
+    } else if (vz.s <= 1.02) {
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) navigate(dx < 0 ? 1 : -1);
+      else if (dy > 130 && dy > Math.abs(dx)) closeViewerNow();
+      else resetZ(true);
+    }
+  }
+  g = null;
+}
+stage.addEventListener('pointerup', endPointer);
+stage.addEventListener('pointercancel', endPointer);
+stage.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoomTo(Math.min(5, Math.max(1, vz.s * (e.deltaY < 0 ? 1.2 : 0.83))), e.clientX, e.clientY);
+}, { passive: false });
 
 $('#vSave').addEventListener('click', () => { if (current) toggleFav(savesMap.get(current.id) || current); });
 $('#vBoard').addEventListener('click', () => { if (current) openBoardSheet(savesMap.get(current.id) || current); });
 
 async function getBlob(item){
   await ensureImage(item);
-  const r = await fetch(item.large, { mode: 'cors' });
-  if (!r.ok) throw 0;
-  return r.blob();
+  for (const url of [item.large, item.thumb]) {
+    if (!url) continue;
+    try { const r = await fetch(url, { mode: 'cors' }); if (r.ok) return await r.blob(); } catch {}
+  }
+  throw 0;
 }
 function saveBlob(blob, name){
   const url = URL.createObjectURL(blob);
@@ -1052,7 +1407,8 @@ $('#vDl').addEventListener('click', async () => {
     saveBlob(blob, 'i-images-' + item.id + '.' + ext);
     toast('Downloaded');
   } catch {
-    window.open(item.large, '_blank');
+    if (!isOnline()) { toast('You are offline. Connect to the internet to download.'); return; }
+    window.open(item.large || item.thumb, '_blank');
     toast('Picture opened. Press and hold it to download.');
   }
 });
@@ -1073,9 +1429,26 @@ $('#vWall').addEventListener('click', async () => {
     saveBlob(blob, 'i-images-wallpaper-' + item.id + '.jpg');
     toast('Wallpaper downloaded. Open it in Gallery and choose Set as wallpaper.');
   } catch {
-    window.open(item.large, '_blank');
+    if (!isOnline()) { toast('You are offline. Connect to the internet to make a wallpaper.'); return; }
+    window.open(item.large || item.thumb, '_blank');
     toast('Picture opened. Download it, then set it as wallpaper from Gallery.');
   }
+});
+
+function similarQuery(item){
+  let parts;
+  if (item.src === 'Pixabay') parts = String(item.tags || '').split(',').map(t => t.trim()).filter(Boolean).slice(0, 2);
+  else parts = words(String(item.tags || '').split(' by ')[0]).filter(w => w.length >= 4).slice(0, 3);
+  return parts.join(' ').trim();
+}
+$('#vSimilar').addEventListener('click', () => {
+  if (!current) return;
+  const q = similarQuery(current);
+  if (!q) { toast('Not enough details to find similar pictures'); return; }
+  if (!isOnline()) { toast('Search needs internet'); return; }
+  closeViewerNow();
+  state.q = q; input.value = q; state.board = 'all';
+  startSearch(); toast('Showing pictures like this');
 });
 
 $('#vShare').addEventListener('click', async () => {
@@ -1091,13 +1464,14 @@ $('#vShare').addEventListener('click', async () => {
 $('#vExtra').addEventListener('click', async () => {
   if (!current || !current.postId || !me || !window.museDB) return;
   const item = current;
+  if (!isOnline()) { toast('You are offline'); return; }
   if (item.uid === me.uid) {
     if (!confirm('Delete this post for everyone?')) return;
     try {
       await window.museDB.deletePost(item.postId);
       grid.querySelectorAll('.card[data-id="' + item.id + '"]').forEach(c => c.remove());
       comm.items = comm.items.filter(x => x.id !== item.id);
-      toast('Post deleted'); $('#vClose').click();
+      toast('Post deleted'); closeViewerNow();
     } catch { toast('Could not delete. Try again.'); }
   } else {
     const reason = prompt('What is wrong with this picture? (optional)');
@@ -1185,32 +1559,164 @@ $('#authForgot').addEventListener('click', async () => {
   catch (err) { authMsg(friendly(err)); }
 });
 
-/* ---------- account page ---------- */
+/* ---------- fingerprint lock (device-only) ---------- */
+const lockEl = $('#lock');
+let lockOK = false, lockBusy = false, hiddenAt = 0;
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64 = t => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+const lockKey = () => 'muse:lock:' + uid;
+const lockOn = () => { try { return !!localStorage.getItem(lockKey()); } catch { return false; } };
+
+async function checkLockSupport(){
+  try { lockOK = !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }
+  catch { lockOK = false; }
+  renderAccount();
+}
+async function enableLock(){
+  lockBusy = true;
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'I-Images' },
+      user: { id: new TextEncoder().encode(uid).slice(0, 64), name: (me && me.email) || uid, displayName: (me && me.name) || 'I-Images user' },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+      timeout: 60000, attestation: 'none'
+    }});
+    localStorage.setItem(lockKey(), b64(cred.rawId));
+  } finally { lockBusy = false; }
+}
+async function checkFingerprint(){
+  const id = localStorage.getItem(lockKey()); if (!id) return;
+  lockBusy = true;
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: 'public-key', id: unb64(id), transports: ['internal'] }],
+      userVerification: 'required', timeout: 60000
+    }});
+  } finally { lockBusy = false; }
+}
+async function tryUnlock(){
+  $('#lockMsg').textContent = '';
+  try { await checkFingerprint(); hideLock(); }
+  catch { $('#lockMsg').textContent = 'Fingerprint not recognised. Tap the button to try again.'; }
+}
+function showLock(){
+  if (!viewer.hidden) closeViewer();
+  $('#boardSheet').hidden = true; $('#postSheet').hidden = true;
+  lockEl.hidden = false; document.body.style.overflow = 'hidden';
+  tryUnlock();
+}
+function hideLock(){ lockEl.hidden = true; document.body.style.overflow = ''; $('#lockMsg').textContent = ''; }
+$('#unlockBtn').addEventListener('click', tryUnlock);
+$('#lockOut').addEventListener('click', async () => { hideLock(); try { await window.museAuth.signOut(); } catch {} });
+$('#lockToggle').addEventListener('click', async () => {
+  try {
+    if (lockOn()) { await checkFingerprint(); localStorage.removeItem(lockKey()); toast('Fingerprint lock is off'); }
+    else { await enableLock(); toast('Fingerprint lock is on'); }
+  } catch { toast('Could not change the fingerprint lock. Try again.'); }
+  renderAccount();
+});
+document.addEventListener('visibilitychange', () => {
+  if (lockBusy) return;
+  if (document.hidden) hiddenAt = Date.now();
+  else if (me && lockOn() && hiddenAt && Date.now() - hiddenAt > 30000 && lockEl.hidden) showLock();
+});
+
+/* ---------- profile + account page ---------- */
+let profile = { photo: '', bio: '' };
+let cloudStarted = false;
+function loadProfileLocal(){
+  try { profile = Object.assign({ photo: '', bio: '' }, JSON.parse(localStorage.getItem('muse:profile:' + uid) || '{}')); }
+  catch { profile = { photo: '', bio: '' }; }
+}
+function saveProfileLocal(){ try { localStorage.setItem('muse:profile:' + uid, JSON.stringify(profile)); } catch {} }
+async function syncProfileFromCloud(){
+  if (!cloudReady() || !isOnline()) return;
+  try {
+    const p = await window.museDB.getProfile(uid);
+    if (p) { profile = Object.assign({ photo: '', bio: '' }, p); saveProfileLocal(); renderAccount(); }
+  } catch {}
+}
+async function saveProfile(patch){
+  profile = Object.assign({}, profile, patch); saveProfileLocal(); renderAccount();
+  if (cloudReady()) {
+    try { await window.museDB.setProfile(uid, { photo: profile.photo || '', bio: profile.bio || '', updatedAt: Date.now() }); }
+    catch { cloudFail(); }
+  }
+}
+function startCloud(){
+  if (cloudStarted || !window.museDB || !me) return;
+  cloudStarted = true; dbMode = 'cloud'; firstSnap = true;
+  window.museDB.listen(uid); syncProfileFromCloud(); renderSync();
+}
+
 function renderSync(){
   $('#acctSync').textContent = dbMode === 'cloud'
-    ? 'Your saved pictures and boards are synced to your account.'
+    ? 'Your saved pictures, boards and profile are synced to your account.'
     : 'Your saved pictures are kept on this phone only. Cloud sync is not switched on yet.';
+}
+function fmtDate(t){
+  try { return new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); } catch { return ''; }
 }
 function renderAccount(){
   const name = (me && me.name) || '';
   $('#acctName').textContent = name || 'Welcome';
   $('#acctMail').textContent = (me && me.email) || '';
-  $('#nameInput').value = name;
-  const av = $('#avatar');
-  if (me && me.photo) av.innerHTML = '<img src="' + esc(me.photo) + '" alt="" referrerpolicy="no-referrer">';
+  $('#acctSince').textContent = me && me.created ? 'Member since ' + fmtDate(me.created) : '';
+  $('#acctBio').textContent = profile.bio || 'No bio yet. Add one below.';
+  if (document.activeElement !== $('#nameInput')) $('#nameInput').value = name;
+  if (document.activeElement !== $('#bioInput')) $('#bioInput').value = profile.bio || '';
+  const av = $('#avatar'), photo = profile.photo || (me && me.photo) || '';
+  if (photo) av.innerHTML = '<img src="' + esc(photo) + '" alt="" referrerpolicy="no-referrer">';
   else av.textContent = ((name || (me && me.email) || '?').trim()[0] || '?').toUpperCase();
+  $('#removePhoto').hidden = !profile.photo;
+  $('#statSaved').textContent = saves.length;
+  $('#statBoards').textContent = boards.length;
   renderSync();
+  $('#lockCard').hidden = !(authOn && lockOK);
+  $('#lockToggle').textContent = lockOn() ? 'Turn off' : 'Turn on';
   const t = document.documentElement.getAttribute('data-theme') || 'dark';
   $('#themeDark').setAttribute('aria-pressed', t === 'dark');
   $('#themeLight').setAttribute('aria-pressed', t === 'light');
 }
-$('#nameForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const n = $('#nameInput').value.trim();
-  if (!n || !window.museAuth) return;
-  try { await window.museAuth.updateName(n); toast('Name saved'); }
-  catch { toast('Could not save your name. Try again.'); }
+async function loadPostCount(){
+  const el = $('#statPosts'); el.textContent = '-';
+  if (!cloudReady() || !isOnline() || !me) return;
+  try { el.textContent = await window.museDB.countPosts(uid); } catch {}
+}
+
+$('#avatarBtn').addEventListener('click', () => $('#avatarFile').click());
+$('#avatarFile').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { const bmp = await createImageBitmap(f); await saveProfile({ photo: toSquare(bmp, 256, 0.8) }); toast('Profile photo updated'); }
+  catch { toast('That picture format is not supported. Use a JPG or PNG.'); }
+  e.target.value = '';
 });
+$('#removePhoto').addEventListener('click', async () => { await saveProfile({ photo: '' }); toast('Profile photo removed'); });
+
+$('#profileForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const n = $('#nameInput').value.trim(), b = $('#bioInput').value.trim().slice(0, 120);
+  await saveProfile({ bio: b });
+  if (n && me && n !== (me.name || '')) {
+    if (!isOnline() || !window.museAuth) { toast('Bio saved. Changing your name needs internet.'); return; }
+    try { await window.museAuth.updateName(n); } catch { toast('Bio saved. Could not change your name. Try again.'); return; }
+  }
+  toast('Profile saved');
+});
+$('#myPosts').addEventListener('click', () => {
+  if (!isOnline()) { toast('You are offline. Your posts need internet.'); return; }
+  commMine = true; setView('community');
+});
+$('#changePw').addEventListener('click', async () => {
+  if (!me || !me.email) return;
+  if (!isOnline() || !window.museAuth) { toast('Changing your password needs internet'); return; }
+  try { await window.museAuth.reset(me.email); toast('Password reset link sent to ' + me.email); }
+  catch { toast('Could not send the link. Try again.'); }
+});
+
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
   try { localStorage.setItem('muse:theme', t); } catch {}
@@ -1220,27 +1726,45 @@ function applyTheme(t){
 $('#themeDark').addEventListener('click', () => applyTheme('dark'));
 $('#themeLight').addEventListener('click', () => applyTheme('light'));
 $('#logout').addEventListener('click', async () => {
+  if (!window.museAuth || !isOnline()) { toast('Logging out needs internet'); return; }
   try { await window.museAuth.signOut(); } catch { toast('Could not log out. Try again.'); }
 });
 
+/* ---------- internet connection notice ---------- */
+function updateNet(){
+  const off = !isOnline();
+  $('#offlineBar').hidden = !off;
+  input.placeholder = off ? 'No internet connection' : 'Search any picture or wallpaper';
+}
+addEventListener('offline', () => { updateNet(); toast('You are offline'); });
+addEventListener('online', () => {
+  updateNet(); toast('Back online');
+  if (authOn && !window.museAuth) { setTimeout(() => location.reload(), 1200); return; }
+  if (state.view === 'explore' && !state.items.length) { state.reqId++; state.loading = false; resetSources(); loadMore(); }
+});
+
+/* ---------- account events from Firebase ---------- */
 addEventListener('muse-auth', e => {
   authReady = true;
   const u = e.detail.user;
   if (!u) {
     if (window.museDB) window.museDB.stop();
-    me = null; uid = 'guest'; saves = []; boards = []; savesMap = new Map(); showAuth(); return;
+    cloudStarted = false; hideLock(); me = null; uid = 'guest'; saves = []; boards = []; savesMap = new Map();
+    profile = { photo: '', bio: '' }; showAuth(); return;
   }
   const same = me && me.uid === u.uid;
   me = u; uid = u.uid;
-  if (same) { renderAccount(); return; }
-  loadLocal();
-  if (window.museDB) { dbMode = 'cloud'; firstSnap = true; window.museDB.listen(uid); } else dbMode = 'local';
+  if (same) { renderAccount(); startCloud(); return; }
+  loadLocal(); loadProfileLocal();
+  if (window.museDB) startCloud(); else dbMode = 'local';
   renderAccount(); hideAuth();
   if (!booted) boot(); else startSearch();
+  if (lockOn()) showLock();
 });
 addEventListener('muse-auth-error', () => {
+  if (me) return;
   authReady = true; authEl.hidden = false;
-  showAuthForm('The sign-in service could not load. Check your internet, then reload the app.');
+  showAuthForm(isOnline() ? 'The sign-in service could not load. Check your internet, then reload the app.' : 'You are offline. Connect to the internet to log in.');
 });
 addEventListener('muse-saves', e => {
   if (dbMode !== 'cloud') return;
@@ -1278,12 +1802,18 @@ function boot(){
 }
 
 setMode('in');
+updateNet();
 if (authOn) {
+  checkLockSupport();
   $('#tabAccount').hidden = false; $('#tabCommunity').hidden = false;
   authEl.hidden = false; document.body.style.overflow = 'hidden';
-  setTimeout(() => { if (!authReady) { authReady = true; showAuthForm('Still connecting. Check your internet connection.'); } }, 8000);
+  setTimeout(() => {
+    if (authReady) return;
+    authReady = true;
+    showAuthForm(isOnline() ? 'Still connecting. Check your internet connection.' : 'You are offline. Connect to the internet to log in.');
+  }, 8000);
 } else {
-  loadLocal(); boot();
+  loadLocal(); loadProfileLocal(); boot();
 }
 </script>
 <script type="module" src="auth.js"></script>

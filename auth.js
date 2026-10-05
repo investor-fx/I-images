@@ -1,7 +1,7 @@
 // Accounts (email + Google) and cloud data (saved pictures, boards, community) via Firebase.
 const cfg = window.MUSE_FIREBASE;
 const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
-const slim = u => u ? { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '' } : null;
+const slim = u => u ? { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '', created: (u.metadata && u.metadata.creationTime) || '' } : null;
 const clean = o => JSON.parse(JSON.stringify(o));
 
 function makeDB(F, db) {
@@ -35,13 +35,27 @@ function makeDB(F, db) {
       const ref = await F.addDoc(F.collection(db, 'posts'), clean(post));
       return ref.id;
     },
-    async loadPosts(cursor) {
+    async loadPosts(cursor, mineUid) {
+      if (mineUid) {
+        const snap = await F.getDocs(F.query(F.collection(db, 'posts'), F.where('uid', '==', mineUid), F.limit(40)));
+        const docs = snap.docs.slice().sort((x, y) => (y.data().createdAt || 0) - (x.data().createdAt || 0));
+        return { docs, items: docs.map(d => Object.assign({ id: d.id }, d.data())) };
+      }
       const parts = [F.collection(db, 'posts'), F.orderBy('createdAt', 'desc')];
       if (cursor) parts.push(F.startAfter(cursor));
       parts.push(F.limit(12));
       const snap = await F.getDocs(F.query(...parts));
       return { docs: snap.docs, items: snap.docs.map(d => Object.assign({ id: d.id }, d.data())) };
     },
+    async countPosts(uid) {
+      const s = await F.getCountFromServer(F.query(F.collection(db, 'posts'), F.where('uid', '==', uid)));
+      return s.data().count;
+    },
+    async getProfile(uid) {
+      const s = await F.getDoc(F.doc(db, 'users', uid, 'meta', 'profile'));
+      return s.exists() ? s.data() : null;
+    },
+    setProfile: (uid, data) => F.setDoc(F.doc(db, 'users', uid, 'meta', 'profile'), clean(data)),
     async getPost(id) {
       const s = await F.getDoc(F.doc(db, 'posts', id));
       return s.exists() ? s.data() : null;

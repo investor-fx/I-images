@@ -1,4 +1,4 @@
-const CACHE = 'i-images-v3';
+const CACHE = 'i-images-v5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './config.js', './auth.js'];
 
 self.addEventListener('install', e => {
@@ -13,7 +13,7 @@ self.addEventListener('activate', e => {
   );
 });
 
-// App files: network first (so updates arrive), cache as the offline fallback.
+// App files: network first (so updates arrive), cache as the fallback.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
